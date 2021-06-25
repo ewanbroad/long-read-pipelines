@@ -1,7 +1,9 @@
+version 1.0
+
+
 ##########################################################################################
 # This pipeline calls SVs on an input LR BAM using various known SV algorithms
 ##########################################################################################
-
 import "Structs.wdl"
 import "Utils.wdl"
 import "VariantUtils.wdl"
