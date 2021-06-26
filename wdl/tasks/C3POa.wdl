@@ -39,7 +39,7 @@ task Processing {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 2*ceil(size(fastq, "GB"))
+    Int disk_size = 4*ceil(size(fastq, "GB"))
 
     command <<<
         set -euxo pipefail
@@ -82,7 +82,7 @@ task Processing {
 
     #########################
     RuntimeAttr default_attr = object {
-        cpu_cores:          1,
+        cpu_cores:          4,
         mem_gb:             8,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
