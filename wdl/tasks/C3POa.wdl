@@ -44,17 +44,20 @@ task Processing {
     command <<<
         set -euxo pipefail
 
+        num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+
         mkdir out
         python3 /C3POa/C3POa.py \
             -r ~{fastq} \
             -s ~{splint_fasta} \
             -c /c3poa.config.txt \
-            -l 100 -d 500 -n 32 -g 1000 \
+            -l 100 -d 500 -n $num_core -g 1000 \
             -o out
 
         grep 'No splint reads' out/c3poa.log | awk '{ print $4 }' > no_splint_reads.txt
         grep 'Under len cutoff' out/c3poa.log | awk '{ print $4 }' > under_len_cutoff.txt
         grep 'Total reads' out/c3poa.log | awk '{ print $3 }' > total_reads.txt
+        grep 'Reads after preprocessing' out/c3poa.log | awk '{ print $4 }' > reads_after_preprocessing.txt
 
         tree -h
     >>>
@@ -74,6 +77,7 @@ task Processing {
         Int no_splint_reads = read_int("no_splint_reads.txt")
         Int under_len_cutoff = read_int("under_len_cutoff.txt")
         Int total_reads = read_int("total_reads.txt")
+        Int reads_after_preprocessing = read_int("reads_after_preprocessing.txt")
     }
 
     #########################
@@ -84,7 +88,7 @@ task Processing {
         boot_disk_gb:       10,
         preemptible_tries:  1,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:2.2.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:2.2.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
