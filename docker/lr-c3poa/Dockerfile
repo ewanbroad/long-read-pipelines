@@ -40,4 +40,4 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/lr-c3poa/lib/
 RUN echo "source activate lr-c3poa" > ~/.bashrc
 
 # install Pip packages
-RUN pip install --upgrade scipy numpy pyabpoa mappy Cython tqdm setuptools wheel
+RUN pip install --upgrade scipy numpy pyabpoa==1.0.6 mappy Cython tqdm setuptools wheel

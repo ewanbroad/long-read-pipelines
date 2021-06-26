@@ -39,10 +39,4 @@ dependencies:
   - wheel=0.36.2=pyhd3eb1b0_0
   - xz=5.2.5=h7b6447c_0
   - zlib=1.2.11=h7b6447c_3
-  - pip:
-    - mappy==2.20
-    - numpy==1.20.3
-    - pyabpoa==1.0.6
-    - scipy==1.6.3
-    - tqdm==4.61.0
 prefix: /opt/conda/envs/lr-c3poa
