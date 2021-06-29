@@ -12,7 +12,7 @@ task Sniffles {
         Int min_read_length = 1000
         Int min_mq = 20
 
-        String chr
+        String? chr
         String prefix
 
         RuntimeAttr? runtime_attr_override

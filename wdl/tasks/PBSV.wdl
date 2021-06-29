@@ -16,6 +16,7 @@ task Discover {
         File ref_fasta
         File ref_fasta_fai
         File? tandem_repeat_bed
+        String? chr
 
         String prefix
 
