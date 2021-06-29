@@ -45,9 +45,9 @@ workflow CallVariants {
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
     }
 
-         input:
-            ref_dict = ref_dict,
-            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
+    input {
+    ref_dict = ref_dict,
+    filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
     }
 
     scatter (c in MakeChrIntervalList.chrs) {
