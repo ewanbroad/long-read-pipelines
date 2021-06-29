@@ -27,6 +27,7 @@ workflow CallVariants {
         File ref_dict
 
         String prefix
+        String? chr
 
         File? tandem_repeat_bed
     }

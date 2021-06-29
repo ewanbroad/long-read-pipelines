@@ -37,6 +37,10 @@ task Discover {
 
     Int disk_size = 2*(ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
 
+
+    String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
+
+
     command <<<
         set -euxo pipefail
 
@@ -47,7 +51,7 @@ task Discover {
     >>>
 
     output {
-        File svsig = "~{prefix}.svsig.gz"
+        File svsig = fileoutput
     }
 
     #########################
