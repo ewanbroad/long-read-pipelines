@@ -55,14 +55,6 @@ workflow ONT10x {
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
         scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
-#            call AR.Minimap2 as AlignSubreads {
-#                input:
-#                    reads      = read_lines(manifest_chunk),
-#                    ref_fasta  = ref_map['fasta'],
-#                    RG         = rg_subreads,
-#                    map_preset = "splice"
-#            }
-
             call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
 
             scatter (a in zip([1, 2, 3, 4], [ C3POa.consensus1, C3POa.consensus2, C3POa.consensus3, C3POa.consensus4 ])) {
@@ -85,8 +77,6 @@ workflow ONT10x {
                 #call Utils.CountFastaRecords as CountConsensusReadsInPartition { input: fasta = fq }
             }
 
-#            File align_subreads_bam = AlignSubreads.aligned_bam
-
             File align_consensus_bam1 = AlignConsensus.aligned_bam[0]
             File align_consensus_bam2 = AlignConsensus.aligned_bam[1]
             File align_consensus_bam3 = AlignConsensus.aligned_bam[2]
@@ -101,8 +91,6 @@ workflow ONT10x {
             call Utils.CountFastqRecords as CountSubreadsInPartition2 { input: fastq = C3POa.subreads2 }
             call Utils.CountFastqRecords as CountSubreadsInPartition3 { input: fastq = C3POa.subreads3 }
             call Utils.CountFastqRecords as CountSubreadsInPartition4 { input: fastq = C3POa.subreads4 }
-
-#            call Utils.CountFastqRecords as CountAnnotatedReadsInPartition { input: fastq = AnnotateAdapters.annotated_fq }
 
             call Utils.CountFastaRecords as CountConsensusReadsInPartition1 { input: fasta = C3POa.consensus1 }
             call Utils.CountFastaRecords as CountConsensusReadsInPartition2 { input: fasta = C3POa.consensus2 }
@@ -164,16 +152,11 @@ workflow ONT10x {
 #    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
 
     if (length(MergeConsensus1.merged_bam) > 1) {
-#        call Utils.MergeBams as MergeAllSubreads { input: bams = MergeSubreads.merged_bam, prefix = "~{participant_name}.subreads" }
-
         call Utils.MergeBams as MergeAllConsensus1 { input: bams = MergeConsensus1.merged_bam, prefix = "~{participant_name}.consensus1" }
         call Utils.MergeBams as MergeAllConsensus2 { input: bams = MergeConsensus2.merged_bam, prefix = "~{participant_name}.consensus2" }
         call Utils.MergeBams as MergeAllConsensus3 { input: bams = MergeConsensus3.merged_bam, prefix = "~{participant_name}.consensus3" }
         call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, prefix = "~{participant_name}.consensus4" }
     }
-
-#    File subreads_bam = select_first([MergeAllSubreads.merged_bam, MergeSubreads.merged_bam[0]])
-#    File subreads_bai = select_first([MergeAllSubreads.merged_bai, MergeSubreads.merged_bai[0]])
 
     File consensus_bam1 = select_first([MergeAllConsensus1.merged_bam, MergeConsensus1.merged_bam[0]])
     File consensus_bai1 = select_first([MergeAllConsensus1.merged_bai, MergeConsensus1.merged_bai[0]])
@@ -183,6 +166,8 @@ workflow ONT10x {
     File consensus_bai3 = select_first([MergeAllConsensus3.merged_bai, MergeConsensus3.merged_bai[0]])
     File consensus_bam4 = select_first([MergeAllConsensus4.merged_bam, MergeConsensus4.merged_bam[0]])
     File consensus_bai4 = select_first([MergeAllConsensus4.merged_bai, MergeConsensus4.merged_bai[0]])
+
+    call C3POa.Annotate { input: bam = consensus_bam1 }
 
 #    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
 #        input:
