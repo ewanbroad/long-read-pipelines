@@ -14,16 +14,21 @@ workflow C3POa {
 
     call Processing { input: fastq = CatRawReads.merged, splint_fasta = splint_fasta }
 
+    call Postprocessing as Postprocessing1 { input: consensus = Processing.consensus1 }
+    call Postprocessing as Postprocessing2 { input: consensus = Processing.consensus2 }
+    call Postprocessing as Postprocessing3 { input: consensus = Processing.consensus3 }
+    call Postprocessing as Postprocessing4 { input: consensus = Processing.consensus4 }
+
     output {
         File subreads1 = Processing.subreads1
         File subreads2 = Processing.subreads2
         File subreads3 = Processing.subreads3
         File subreads4 = Processing.subreads4
 
-        File consensus1 = Processing.consensus1
-        File consensus2 = Processing.consensus2
-        File consensus3 = Processing.consensus3
-        File consensus4 = Processing.consensus4
+        File consensus1 = Postprocessing1.consensus_full
+        File consensus2 = Postprocessing2.consensus_full
+        File consensus3 = Postprocessing3.consensus_full
+        File consensus4 = Postprocessing4.consensus_full
 
         Int no_splint_reads  = Processing.no_splint_reads
         Int under_len_cutoff = Processing.under_len_cutoff
@@ -114,7 +119,13 @@ task Postprocessing {
     command <<<
         set -euxo pipefail
 
-        python3 /C3POa/C3POa_postprocessing.py -i ~{consensus} -c /c3poa.config.txt -a /C3POa/adapter.fasta -o ./
+        python3 /C3POa/C3POa_postprocessing.py \
+            -i ~{consensus} \
+            -c /c3poa.config.txt \
+            -a /C3POa/adapter.fasta \
+            -o ./
+
+        tree -h
     >>>
 
     output {
@@ -131,7 +142,7 @@ task Postprocessing {
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        1,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:0.1.9"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-c3poa:2.2.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

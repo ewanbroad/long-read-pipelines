@@ -30,6 +30,13 @@ RUN git clone https://github.com/rvolden/C3POa.git \
     && chmod +x setup.sh \
     && ./setup.sh
 
+# install 10xR2C2
+RUN git clone https://github.com/rvolden/10xR2C2.git \
+    && cd 10xR2C2 \
+    && git checkout 76aadaf8c3c65020be661c38932fb1b46757edf8 \
+    && git reset --hard \
+    && cp *.py /usr/local/bin/
+
 # install gsutil
 RUN curl https://sdk.cloud.google.com | bash
 
@@ -41,3 +48,6 @@ RUN echo "source activate lr-c3poa" > ~/.bashrc
 
 # install Pip packages
 RUN pip install --upgrade scipy numpy pyabpoa==1.0.6 mappy Cython tqdm setuptools wheel
+
+# copy 10x whitelist
+COPY 737K-august-2016.txt /
