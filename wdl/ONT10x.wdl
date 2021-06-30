@@ -167,7 +167,7 @@ workflow ONT10x {
     File consensus_bam4 = select_first([MergeAllConsensus4.merged_bam, MergeConsensus4.merged_bam[0]])
     File consensus_bai4 = select_first([MergeAllConsensus4.merged_bai, MergeConsensus4.merged_bai[0]])
 
-    call C3POa.Annotate { input: bam = consensus_bam1 }
+    call C3.Annotate { input: bam = consensus_bam1 }
 
 #    call Utils.GrepCountBamRecords as GrepAnnotatedReadsWithCBC {
 #        input:
