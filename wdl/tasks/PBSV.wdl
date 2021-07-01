@@ -30,7 +30,7 @@ task Discover {
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
-
+        chr:               "chr on which to call variants"
 
         prefix:            "prefix for output"
     }
@@ -47,11 +47,11 @@ task Discover {
         pbsv discover \
             ~{if defined(tandem_repeat_bed) && tandem_repeat_bed != "NA" then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
             ~{bam} \
-            ~{prefix}.svsig.gz
+            ~{fileoutput}
     >>>
 
     output {
-        File svsig = fileoutput
+        File svsig = "~{fileoutput}"
     }
 
     #########################
