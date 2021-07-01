@@ -9,6 +9,7 @@ dependencies:
   - bzip2=1.0.8=h7b6447c_0
   - ca-certificates=2021.5.25=h06a4308_1
   - certifi=2021.5.30=py39h06a4308_0
+  - editdistance=0.5.3=py39h2531618_0
   - htslib=1.11=hd3b49d5_2
   - intel-openmp=2021.2.0=h06a4308_610
   - krb5=1.18.2=h173b8e3_0
