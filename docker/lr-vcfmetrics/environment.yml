@@ -1,0 +1,10 @@
+name: lr-vcfmetrics
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - bcftools=1.11
+  - bedtools=2.29.2
+  - truvari
+prefix: /opt/conda/envs/lr-vcfmetrics
