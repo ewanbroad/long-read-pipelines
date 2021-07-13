@@ -65,9 +65,6 @@ workflow run_pbsv {
 
 
 
-
-
-
     output {
         File Discover_out = Discover.svsig
         File Call_out = Call.vcf
