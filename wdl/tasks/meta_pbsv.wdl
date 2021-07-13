@@ -68,23 +68,23 @@ workflow chromosome_condition {
         input:
             bam = bam,
             bai = bai,
-
             ref_fasta = ref_fasta,
             ref_fasta_fai = ref_fasta_fai,
+            ref_dict = ref_dict,
             tandem_repeat_bed = tandem_repeat_bed,
 
-            prefix = prefix,
+            prefix = prefix
         }
 
 
     }
 
-#    output {
-#
-#        File vcf = run_pbsv.Call.vcf
-#        File svsig = run_pbsv.Discover.svsig
-#
-#    }
+    output {
+
+        File? vcf = if (fast_less_sensitive) then run_pbsv2.pbsv_vcf else run_pbsv.Call_out
+        #File svsig = if (fast_less_sensitive) then run_pbsv2.Discover.svsig else run_pbsv.Discover_out
+
+    }
 
 
 }
