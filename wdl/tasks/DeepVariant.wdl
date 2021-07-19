@@ -12,23 +12,23 @@ task DeepVariant {
         File bai
 
         File ref_fasta
-        File ref_fai
+        File ref_fasta_fai
 
-        String model_class
         String chr
+        String preset
 
         RuntimeAttr? runtime_attr_override
     }
 
     parameter_meta {
-        bam: "input BAM from which to call variants"
-        bai: "index accompanying the BAM"
+        bam:             "input BAM from which to call variants"
+        bai:             "index accompanying the BAM"
 
-        ref_fasta: "reference to which the BAM was aligned to"
-        ref_fai:   "index accompanying the reference"
+        ref_fasta:       "reference to which the BAM was aligned to"
+        ref_fasta_fai:   "index accompanying the reference"
 
-        model_class: "class of model to be applied; currently only 'PACBIO' is accepted"
-        chr: "chromsome on which to call variants"
+        chr:             "chr on which to call variants"
+        preset:          "calling preset (CCS, ONT)"
     }
 
     Int disk_size = ceil(size(bam, "GB")) + 50
@@ -41,7 +41,7 @@ task DeepVariant {
         num_core=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
         /opt/deepvariant/bin/run_deepvariant \
-          --model_type=~{model_class} \
+          --model_type=PACBIO \
           --ref=~{ref_fasta} \
           --reads=~{bam} \
           --output_vcf=~{prefix}.deepvariant.~{chr}.vcf.gz \
@@ -168,10 +168,9 @@ task PEPPER {
         mem_gb:             72,
         disk_gb:            disk_size,
         boot_disk_gb:       100,
-        preemptible_tries:  0,
-        max_retries:        0,
+        preemptible_tries:  2,
+        max_retries:        1,
         docker:             "kishwars/pepper_deepvariant:r0.4.1"
-        #docker:             "us.gcr.io/broad-dsp-lrma/lr-dvpepper:r0.4.1"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
