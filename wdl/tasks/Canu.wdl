@@ -137,6 +137,8 @@ task Trim {
             -p ~{prefix} -d canu_trim_output \
             genomeSize=~{genome_size}m \
             correctedErrorRate=~{error_rate} \
+            minInputCoverage=5 \
+            stopOnLowCoverage=5 \
             -nanopore-corrected \
             ~{corrected_reads}
     >>>
@@ -194,6 +196,8 @@ task Assemble {
              -p ~{prefix} -d canu_assemble_output \
              genomeSize=~{genome_size}m \
              correctedErrorRate=~{error_rate} \
+             minInputCoverage=5 \
+             stopOnLowCoverage=5 \
              -nanopore-corrected \
              ~{trimmed_reads}
     >>>
