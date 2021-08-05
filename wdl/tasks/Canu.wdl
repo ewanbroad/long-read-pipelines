@@ -77,6 +77,8 @@ task Correct {
              -p ~{prefix} -d canu_correct_output \
              genomeSize=~{genome_size}m \
              corMaxEvidenceErate=0.15 \
+             minInputCoverage=5 \
+             stopOnLowCoverage=5 \
              correctedErrorRate=~{error_rate} \
              -nanopore \
              ~{reads}
