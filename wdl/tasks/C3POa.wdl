@@ -226,7 +226,12 @@ task Annotate {
     >>>
 
     output {
-        File out = "test"
+        File most_frequent_1500_bcs_fa = "1500_most_frequent_bcs.fasta"
+        File R2C2_10x_postprocessed_fa = "R2C2_10x_postprocessed.fasta"
+        File R2C2_matched_fa = "R2C2_matched.fasta"
+        File bcGuide = "demuxed/bcGuide"
+        Array[File] cell_barcoded_fa = glob("demuxed/cell*.fasta") # e.g. cell_0_GTGCGGTTCCTGTAGA.fasta
+        File kmer_demuxed_fa = "kmer_demuxed.fasta"
     }
 
     #########################
