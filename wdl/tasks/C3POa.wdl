@@ -216,7 +216,7 @@ task Annotate {
         python3 /10xR2C2/demuxing/Demultiplex_R2C2_reads_kmerBased.py -i R2C2_10x_postprocessed.fasta -o . -n 1500_most_frequent_bcs.fasta
         python3 /10xR2C2/demuxing/match_fastas.py kmer_demuxed.fasta R2C2_10x_postprocessed.fasta > R2C2_matched.fasta
 
-        mkdir -p demuxed/bcGuide
+        mkdir -p demuxed
 
         tree -h
 
