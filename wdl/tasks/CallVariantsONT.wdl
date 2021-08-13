@@ -29,6 +29,7 @@ workflow CallVariants {
 
         File? sites_vcf
         File? sites_vcf_tbi
+        String? chr
 
         String prefix
 
