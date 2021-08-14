@@ -49,7 +49,7 @@ workflow ONTWholeGenome {
     File bai = select_first([MergeAllReads.merged_bai, aligned_bais[0]])
 
     if (call_variants) {
-        call VAR.CallVariants {
+        call VAR.chromosome_condition as CallVariants {
             input:
                 bam               = bam,
                 bai               = bai,
