@@ -8,7 +8,7 @@ version 1.0
 
 import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
-import "tasks/CallVariantsONT.wdl" as VAR
+import "tasks/meta_ONT.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTWholeGenome {
@@ -24,6 +24,7 @@ workflow ONTWholeGenome {
         File? sites_vcf_tbi
 
         String gcs_out_root_dir
+        Boolean fast_suboptimal
     }
 
     parameter_meta {
@@ -34,6 +35,7 @@ workflow ONTWholeGenome {
         participant_name:   "name of the participant from whom these samples were obtained"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+        fast_suboptimal:    "true indicates fast/suboptimal processing, false indicates slower but more sensitive processing"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -61,6 +63,7 @@ workflow ONTWholeGenome {
 
                 sites_vcf         = sites_vcf,
                 sites_vcf_tbi     = sites_vcf_tbi,
+                fast_less_sensitive = fast_suboptimal,
 
                 prefix = participant_name
         }
