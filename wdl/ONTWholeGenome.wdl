@@ -20,8 +20,8 @@ workflow ONTWholeGenome {
         String participant_name
 
         Boolean call_variants = true
-        File? sites_vcf
-        File? sites_vcf_tbi
+#        File? sites_vcf
+#        File? sites_vcf_tbi
 
         String gcs_out_root_dir
         Boolean fast_suboptimal
@@ -61,8 +61,8 @@ workflow ONTWholeGenome {
                 ref_dict          = ref_map['dict'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
 
-                sites_vcf         = sites_vcf,
-                sites_vcf_tbi     = sites_vcf_tbi,
+#                sites_vcf         = sites_vcf,
+#                sites_vcf_tbi     = sites_vcf_tbi,
                 fast_less_sensitive = fast_suboptimal,
 
                 prefix = participant_name
@@ -71,7 +71,8 @@ workflow ONTWholeGenome {
         String svdir = outdir + "/variants/sv"
         String smalldir = outdir + "/variants/small"
 
-        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
+        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = select_first([CallVariants.vcf]) }
+
 #        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
 #
 #        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
@@ -80,9 +81,9 @@ workflow ONTWholeGenome {
 #        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi { input: outdir = smalldir, file = CallVariants.dvp_g_tbi }
 #        call FF.FinalizeToFile as FinalizeDVPEPPERVcf { input: outdir = smalldir, file = CallVariants.dvp_vcf }
 #        call FF.FinalizeToFile as FinalizeDVPEPPERTbi { input: outdir = smalldir, file = CallVariants.dvp_tbi }
-
-        call FF.FinalizeToFile as FinalizeLongshotVcf { input: outdir = smalldir, file = CallVariants.longshot_vcf }
-        call FF.FinalizeToFile as FinalizeLongshotTbi { input: outdir = smalldir, file = CallVariants.longshot_tbi }
+#
+#        call FF.FinalizeToFile as FinalizeLongshotVcf { input: outdir = smalldir, file = CallVariants.longshot_vcf }
+#        call FF.FinalizeToFile as FinalizeLongshotTbi { input: outdir = smalldir, file = CallVariants.longshot_tbi }
     }
 
     # Finalize data
@@ -101,7 +102,7 @@ workflow ONTWholeGenome {
 #        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
 #        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
 
-        File? longshot_vcf = FinalizeLongshotVcf.gcs_path
-        File? longshot_tbi = FinalizeLongshotTbi.gcs_path
+#        File? longshot_vcf = FinalizeLongshotVcf.gcs_path
+#        File? longshot_tbi = FinalizeLongshotTbi.gcs_path
     }
 }
