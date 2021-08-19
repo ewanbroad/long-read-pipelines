@@ -218,8 +218,6 @@ task Annotate {
 
         mkdir -p demuxed
 
-        tree -h
-
         python3 /10xR2C2/demuxing/demux_nano.py 1500_most_frequent_bcs.fasta kmer_demuxed.fasta R2C2_matched.fasta
 
         tree -h
