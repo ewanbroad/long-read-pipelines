@@ -1,0 +1,11 @@
+name: lr-quast
+
+channels:
+  - bioconda
+  - defaults
+  - conda-forge
+
+dependencies:
+  - python=3.7
+  - matplotlib-base=3.4.3
+  - quast=5.0.2

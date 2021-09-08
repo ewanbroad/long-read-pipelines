@@ -21,7 +21,8 @@ task Quast {
         assemblies: "list of assemblies to evaluate"
     }
 
-    Int disk_size = 2*(ceil(size(ref, "GB") + size(assemblies, "GB")))
+    Int minimal_disk_size = 2*(ceil(size(ref, "GB") + size(assemblies, "GB")))
+    Int disk_size = if minimal_disk_size > 100 then minimal_disk_size else 100
 
     command <<<
         set -x
