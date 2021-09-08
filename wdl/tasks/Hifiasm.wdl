@@ -8,6 +8,11 @@ workflow Hifiasm {
         String prefix
     }
 
+    parameter_meta {
+        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
+        prefix:   "prefix to apply to assembly output filenames"
+    }
+
     call Assemble {
         input:
             reads  = reads,
@@ -17,6 +22,7 @@ workflow Hifiasm {
     output {
         File gfa = Assemble.gfa
         File fa = Assemble.fa
+        Array[File] phased_contigs = Assemble.phased_contigs
     }
 }
 
@@ -30,24 +36,25 @@ task Assemble {
         RuntimeAttr? runtime_attr_override
     }
 
-    parameter_meta {
-        reads:    "reads (in fasta or fastq format, compressed or uncompressed)"
-        prefix:   "prefix to apply to assembly output filenames"
-        num_cpus: "number of CPUs to parallelize over"
-    }
-
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        hifiasm -o ~{prefix} -t~{num_cpus} ~{reads}
-        awk '/^S/{print ">"$2; print $3}' ~{prefix}.p_ctg.gfa > ~{prefix}.p_ctg.fa
+        hifiasm \
+            -o ~{prefix} \
+            -t~{num_cpus} \
+            ~{reads}
+        
+        awk '/^S/{print ">"$2; print $3}' \
+            ~{prefix}.bp.p_ctg.gfa \
+            > ~{prefix}.bp.p_ctg.fa
     >>>
 
     output {
-        File gfa = "~{prefix}.p_ctg.gfa"
-        File fa = "~{prefix}.p_ctg.fa"
+        File gfa = "~{prefix}.bp.p_ctg.gfa"
+        File fa = "~{prefix}.bp.p_ctg.fa"
+        Array[File] phased_contigs = glob("~{prefix}.bp.hap*.p_ctg.gfa")
     }
 
     #########################
@@ -58,7 +65,7 @@ task Assemble {
         boot_disk_gb:       10,
         preemptible_tries:  0,
         max_retries:        0,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.13"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-hifiasm:0.16.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

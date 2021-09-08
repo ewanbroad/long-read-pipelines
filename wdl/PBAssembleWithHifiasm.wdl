@@ -9,16 +9,17 @@ version 1.0
 import "tasks/Utils.wdl" as Utils
 import "tasks/Hifiasm.wdl" as HA
 import "tasks/CallAssemblyVariants.wdl" as AV
-import "tasks/Quast.wdl" as Quast
+import "tasks/Quast.wdl" as QuastEval
 import "tasks/Finalize.wdl" as FF
 
 workflow PBAssembleWithHifiasm {
     input {
         Array[File] ccs_fqs
 
-        File ref_map_file
         String participant_name
         String prefix
+
+        File ref_map_file
 
         String gcs_out_root_dir
     }
@@ -26,10 +27,10 @@ workflow PBAssembleWithHifiasm {
     parameter_meta {
         ccs_fqs:            "GCS path to CCS fastq files"
 
-        ref_map_file:       "table indicating reference sequence and auxillary file locations"
         participant_name:   "name of the participant from whom these samples were obtained"
         prefix:             "prefix for output files"
 
+        ref_map_file:       "table indicating reference sequence and auxillary file locations"
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
     }
 
@@ -37,14 +38,12 @@ workflow PBAssembleWithHifiasm {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBAssembleWithHifiasm/~{prefix}"
 
-    call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
-
     # gather across (potential multiple) input CCS BAMs
     if (length(ccs_fqs) > 1) {
         call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = ccs_fqs }
     }
 
-    File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, ccs_fqs ])
+    File ccs_fq  = select_first([ MergeAllFastqs.merged_fastq, ccs_fqs[0] ])
 
     call HA.Hifiasm {
         input:
@@ -52,7 +51,7 @@ workflow PBAssembleWithHifiasm {
             prefix = prefix
     }
 
-    call Quast.Quast {
+    call QuastEval.Quast {
         input:
             assemblies = [ Hifiasm.fa ]
     }
@@ -68,16 +67,21 @@ workflow PBAssembleWithHifiasm {
     # Finalize data
     String dir = outdir + "/assembly"
 
-    call FF.FinalizeToFile as FinalizeHifiasmGfa { input: outdir = dir, file = Hifiasm.gfa }
-    call FF.FinalizeToFile as FinalizeHifiasmFa { input: outdir = dir, file = Hifiasm.fa }
+    call FF.FinalizeToFile as FinalizeHifiasmGfa      { input: outdir = dir, file = Hifiasm.gfa }
+    call FF.FinalizeToFile as FinalizeHifiasmFa       { input: outdir = dir, file = Hifiasm.fa }
+
+    call FF.FinalizeToDir  as FinalizeHifiasmHapTigs  { input: outdir = dir + "/haplotigs", files = Hifiasm.phased_contigs }
+
     call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
-    call FF.FinalizeToFile as FinalizeQuastReportTxt { input: outdir = dir, file = Quast.report_txt }
-    call FF.FinalizeToFile as FinalizePaf { input: outdir = dir, file = CallAssemblyVariants.paf }
-    call FF.FinalizeToFile as FinalizePafToolsVcf { input: outdir = dir, file = CallAssemblyVariants.paftools_vcf }
+    call FF.FinalizeToFile as FinalizeQuastReportTxt  { input: outdir = dir, file = Quast.report_txt }
+    call FF.FinalizeToFile as FinalizePaf             { input: outdir = dir, file = CallAssemblyVariants.paf }
+    call FF.FinalizeToFile as FinalizePafToolsVcf     { input: outdir = dir, file = CallAssemblyVariants.paftools_vcf }
 
     output {
         File hifiasm_gfa = FinalizeHifiasmGfa.gcs_path
         File hifiasm_fa = FinalizeHifiasmFa.gcs_path
+
+        String hifiasm_haplotigs = FinalizeHifiasmHapTigs.gcs_dir
 
         File paf = FinalizePaf.gcs_path
         File paftools_vcf = FinalizePafToolsVcf.gcs_path
