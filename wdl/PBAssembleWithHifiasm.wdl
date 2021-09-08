@@ -89,14 +89,14 @@ workflow PBAssembleWithHifiasm {
         File quast_report_html = FinalizeQuastReportHtml.gcs_path
         File quast_report_txt = FinalizeQuastReportTxt.gcs_path
 
-        Int num_contigs = Quast.metrics['#_contigs']
-        Int largest_contigs = Quast.metrics['Largest_contig']
-        String total_length = Quast.metrics['Total_length']
-        Float gc_pct = Quast.metrics['GC_(%)']
-        Int n50 = Quast.metrics['N50']
-        Int n75 = Quast.metrics['N75']
-        Int l50 = Quast.metrics['L50']
-        Int l75 = Quast.metrics['L75']
+        # Int num_contigs = Quast.metrics['#_contigs']
+        # Int largest_contigs = Quast.metrics['Largest_contig']
+        # String total_length = Quast.metrics['Total_length']
+        # Float gc_pct = Quast.metrics['GC_(%)']
+        # Int n50 = Quast.metrics['N50']
+        # Int n75 = Quast.metrics['N75']
+        # Int l50 = Quast.metrics['L50']
+        # Int l75 = Quast.metrics['L75']
 
 #        Float genome_fraction_pct = Quast.metrics['Genome_fraction_(%)']
 #        Int ng50 = Quast.metrics['NG50']
