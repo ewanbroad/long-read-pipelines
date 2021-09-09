@@ -7,6 +7,7 @@ task FinalizeToFile {
         File file
         String outdir
         String? name
+        Boolean gzip_compress = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -20,13 +21,23 @@ task FinalizeToFile {
         name:   "name to set for uploaded file"
     }
 
+    String base = basename(file)
     String gcs_output_dir = sub(outdir, "/+$", "")
-    String gcs_output_file = gcs_output_dir + "/" + select_first([name, basename(file)])
+    # THIS IS ABSOLUTELY CRITICAL: DON'T CHANGE TYPE TO FILE, AS CROMWELL WILL TRY TO LOCALIZE THIS NON-EXISTENT FILE
+    String gcs_output_file = gcs_output_dir + "/" + select_first([name, base]) + if gzip_compress then ".gz" else ""
+
+    Int disk_size = 2 * ceil(size(file, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        gsutil -m cp "~{file}" "~{gcs_output_file}"
+        if ~{gzip_compress}; then
+            gsutil cp "~{file}" . && gzip -vk "~{base}" ## need to locatize explicitly
+            gsutil -m cp "~{base}.gz" "~{gcs_output_file}"
+        else
+            gsutil -m cp "~{file}" "~{gcs_output_file}"
+        fi
+
     >>>
 
     output {
@@ -37,11 +48,11 @@ task FinalizeToFile {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            10,
+        disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {
@@ -59,6 +70,7 @@ task FinalizeToDir {
     input {
         Array[File] files
         String outdir
+        Boolean gzip_compress = false
 
         RuntimeAttr? runtime_attr_override
     }
@@ -72,11 +84,22 @@ task FinalizeToDir {
     }
 
     String gcs_output_dir = sub(outdir, "/+$", "")
+    Int disk_size = 2 * ceil(size(files, "GB"))
 
     command <<<
         set -euxo pipefail
 
-        cat ~{write_lines(files)} | gsutil -m cp -I "~{gcs_output_dir}"
+        if ~{gzip_compress}; then
+            for ff in ~{sep=' ' files};
+            do
+                base=$(echo "${ff}" | awk -F '/' '{print $NF}')
+                gsutil cp "${ff}" . && gzip -vk "${base}" ## need to locatize explicitly
+            done
+            find ./ -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g' ## emulate tree command
+            ls /cromwell_root/*.gz | gsutil -m cp -I "~{gcs_output_dir}"
+        else
+            cat ~{write_lines(files)} | gsutil -m cp -I "~{gcs_output_dir}"
+        fi
     >>>
 
     output {
@@ -87,11 +110,11 @@ task FinalizeToDir {
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
         mem_gb:             1,
-        disk_gb:            10,
+        disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  2,
         max_retries:        2,
-        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.2"
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-finalize:0.1.3"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
     runtime {

@@ -67,10 +67,10 @@ workflow PBAssembleWithHifiasm {
     # Finalize data
     String dir = outdir + "/assembly"
 
-    call FF.FinalizeToFile as FinalizeHifiasmGfa      { input: outdir = dir, file = Hifiasm.gfa }
-    call FF.FinalizeToFile as FinalizeHifiasmFa       { input: outdir = dir, file = Hifiasm.fa }
+    call FF.FinalizeToFile as FinalizeHifiasmGfa      { input: outdir = dir, file = Hifiasm.gfa, gzip_compress = true }
+    call FF.FinalizeToFile as FinalizeHifiasmFa       { input: outdir = dir, file = Hifiasm.fa,  gzip_compress = true }
 
-    call FF.FinalizeToDir  as FinalizeHifiasmHapTigs  { input: outdir = dir + "/haplotigs", files = Hifiasm.phased_contigs }
+    call FF.FinalizeToDir  as FinalizeHifiasmHapTigs  { input: outdir = dir + "/haplotigs", files = Hifiasm.phased_contigs, gzip_compress = true }
 
     call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
     call FF.FinalizeToFile as FinalizeQuastReportTxt  { input: outdir = dir, file = Quast.report_txt }
