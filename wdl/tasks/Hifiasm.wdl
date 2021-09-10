@@ -31,10 +31,12 @@ task Assemble {
         File reads
         String prefix = "out"
 
-        Int num_cpus = 32
-
         RuntimeAttr? runtime_attr_override
     }
+    
+    Int memory = 3 * ceil(size(reads, "GB"))
+    Int n = memory / 4  # this might be an odd number
+    Int num_cpus = if (n/2)*2 == n then n else n+1  # a hack because WDL doesn't have modulus operator
 
     Int disk_size = 10 * ceil(size(reads, "GB"))
 
@@ -60,7 +62,7 @@ task Assemble {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          num_cpus,
-        mem_gb:             150,
+        mem_gb:             memory,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
