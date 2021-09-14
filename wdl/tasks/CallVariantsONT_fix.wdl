@@ -11,6 +11,7 @@ import "Utils.wdl"
 import "VariantUtils.wdl"
 
 import "DeepVariant.wdl" as DV
+import "Longshot.wdl"
 
 import "PBSV.wdl"
 import "Sniffles.wdl"
@@ -26,8 +27,11 @@ workflow CallVariants {
         File ref_fasta_fai
         File ref_dict
 
-        String prefix
+        File? sites_vcf
+        File? sites_vcf_tbi
         String? chr
+
+        String prefix
 
         File? tandem_repeat_bed
     }
@@ -77,29 +81,35 @@ workflow CallVariants {
                 svsigs        = [ Discover.svsig ],
                 ref_fasta     = ref_fasta,
                 ref_fasta_fai = ref_fasta_fai,
-                ccs           = true,
                 prefix        = prefix
         }
 
-        call Sniffles.Sniffles {
-            input:
-                bam    = SubsetBam.subset_bam,
-                bai    = SubsetBam.subset_bai,
-                chr    = contig,
-                prefix = prefix
-        }
 
-        call DV.PEPPER {
-            input:
-                bam           = SubsetBam.subset_bam,
-                bai           = SubsetBam.subset_bai,
-                ref_fasta     = ref_fasta,
-                ref_fasta_fai = ref_fasta_fai,
-                chr           = contig,
-                preset        = "CCS"
-        }
+
+        # Pending a bug fix
+#        call DV.PEPPER {
+#            input:
+#                bam           = SubsetBam.subset_bam,
+#                bai           = SubsetBam.subset_bai,
+#                ref_fasta     = ref_fasta,
+#                ref_fasta_fai = ref_fasta_fai,
+#                chr           = contig,
+#                preset        = "ONT"
+#        }
+
+#        call Longshot.Longshot {
+#            input:
+#                bam           = SubsetBam.subset_bam,
+#                bai           = SubsetBam.subset_bai,
+#                ref_fasta     = ref_fasta,
+#                ref_fasta_fai = ref_fasta_fai,
+#                sites_vcf     = sites_vcf,
+#                sites_vcf_tbi = sites_vcf_tbi,
+#                phase         = false,
+#                chr           = contig
+#        }
     }
-
+# gather step
     call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
         input:
             vcfs     = Call.vcf,
@@ -107,43 +117,20 @@ workflow CallVariants {
             prefix   = prefix + ".pbsv"
     }
 
-    call VariantUtils.MergePerChrCalls as MergeSnifflesVCFs {
-        input:
-            vcfs     = Sniffles.vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".sniffles"
-    }
 
-    call VariantUtils.MergePerChrCalls as MergeDeepVariantPhasedVCFs {
-        input:
-            vcfs     = PEPPER.phased_vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper.phased"
-    }
+#    call VariantUtils.MergePerChrCalls as MergeLongshotVCFs {
+#        input:
+#            vcfs     = Longshot.vcf,
+#            ref_dict = ref_dict,
+#            prefix   = prefix + ".longshot"
+#    }
 
-    call VariantUtils.MergePerChrCalls as MergeDeepVariantGVCFs {
-        input:
-            vcfs     = PEPPER.gvcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper.g"
-    }
 
-    call VariantUtils.MergePerChrCalls as MergeDeepVariantVCFs {
-        input:
-            vcfs     = PEPPER.vcf,
-            ref_dict = ref_dict,
-            prefix   = prefix + ".deepvariant_pepper"
-    }
 
     output {
-        File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
-        File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
-        File dvp_g_vcf = MergeDeepVariantGVCFs.vcf
-        File dvp_g_tbi = MergeDeepVariantGVCFs.tbi
-        File dvp_vcf = MergeDeepVariantVCFs.vcf
-        File dvp_tbi = MergeDeepVariantVCFs.tbi
 
+#        File longshot_vcf = MergeLongshotVCFs.vcf
+#        File longshot_tbi = MergeLongshotVCFs.tbi
         File pbsv_vcf = MergePBSVVCFs.vcf
-        File sniffles_vcf = MergeSnifflesVCFs.vcf
     }
 }

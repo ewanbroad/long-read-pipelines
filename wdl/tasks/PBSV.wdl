@@ -16,8 +16,8 @@ task Discover {
         File ref_fasta
         File ref_fasta_fai
         File? tandem_repeat_bed
+        String? chr
 
-        String chr
         String prefix
 
         RuntimeAttr? runtime_attr_override
@@ -30,12 +30,16 @@ task Discover {
         ref_fasta:         "reference to which the BAM was aligned to"
         ref_fasta_fai:     "index accompanying the reference"
         tandem_repeat_bed: "BED file containing TRF finder (e.g. http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.trf.bed.gz)"
-
         chr:               "chr on which to call variants"
+
         prefix:            "prefix for output"
     }
 
     Int disk_size = 2*(ceil(size([bam, bai, ref_fasta, ref_fasta_fai], "GB")) + 1)
+
+
+    String fileoutput = if defined(chr) then "~{prefix}.~{chr}.svsig.gz" else "~{prefix}.svsig.gz"
+
 
     command <<<
         set -euxo pipefail
@@ -43,17 +47,17 @@ task Discover {
         pbsv discover \
             ~{if defined(tandem_repeat_bed) && tandem_repeat_bed != "NA" then "--tandem-repeats ~{tandem_repeat_bed}" else ""} \
             ~{bam} \
-            ~{prefix}.~{chr}.svsig.gz
+            ~{fileoutput}
     >>>
 
     output {
-        File svsig = "~{prefix}.~{chr}.svsig.gz"
+        File svsig = "~{fileoutput}"
     }
 
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             16,
+        mem_gb:             48,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
@@ -118,7 +122,7 @@ task Call {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          4,
-        mem_gb:             64,
+        mem_gb:             96,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  1,

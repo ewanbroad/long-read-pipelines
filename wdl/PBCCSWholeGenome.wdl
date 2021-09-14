@@ -8,7 +8,7 @@ version 1.0
 
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
-import "tasks/CallVariantsPBCCS.wdl" as VAR
+import "tasks/meta_pbsv.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSWholeGenome {
@@ -22,6 +22,7 @@ workflow PBCCSWholeGenome {
         Boolean call_variants = true
 
         String gcs_out_root_dir
+        Boolean fast_suboptimal
     }
 
     parameter_meta {
@@ -32,6 +33,7 @@ workflow PBCCSWholeGenome {
         participant_name:   "name of the participant from whom these samples were obtained"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
+        fast_suboptimal: "true indicates fast/suboptimal processing, false indicates slower but more sensitive processing"
     }
 
     Map[String, String] ref_map = read_map(ref_map_file)
@@ -50,7 +52,7 @@ workflow PBCCSWholeGenome {
     File pbi = IndexCCSUnalignedReads.pbi
 
     if (call_variants) {
-        call VAR.CallVariants {
+        call VAR.chromosome_condition as CallVariants {
             input:
                 bam               = bam,
                 bai               = bai,
@@ -59,6 +61,7 @@ workflow PBCCSWholeGenome {
                 ref_fasta_fai     = ref_map['fai'],
                 ref_dict          = ref_map['dict'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+                fast_less_sensitive = fast_suboptimal,
 
                 prefix = participant_name
         }
@@ -66,15 +69,15 @@ workflow PBCCSWholeGenome {
         String svdir = outdir + "/variants/sv"
         String smalldir = outdir + "/variants/small"
 
-        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
-        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
-
-        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
-        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = CallVariants.dvp_phased_tbi }
-        call FF.FinalizeToFile as FinalizeDVPEPPERGVcf { input: outdir = smalldir, file = CallVariants.dvp_g_vcf }
-        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi { input: outdir = smalldir, file = CallVariants.dvp_g_tbi }
-        call FF.FinalizeToFile as FinalizeDVPEPPERVcf { input: outdir = smalldir, file = CallVariants.dvp_vcf }
-        call FF.FinalizeToFile as FinalizeDVPEPPERTbi { input: outdir = smalldir, file = CallVariants.dvp_tbi }
+        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = select_first([CallVariants.vcf]) }
+#        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
+#
+#        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = CallVariants.dvp_phased_vcf }
+#        call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = CallVariants.dvp_phased_tbi }
+#        call FF.FinalizeToFile as FinalizeDVPEPPERGVcf { input: outdir = smalldir, file = CallVariants.dvp_g_vcf }
+#        call FF.FinalizeToFile as FinalizeDVPEPPERGTbi { input: outdir = smalldir, file = CallVariants.dvp_g_tbi }
+#        call FF.FinalizeToFile as FinalizeDVPEPPERVcf { input: outdir = smalldir, file = CallVariants.dvp_vcf }
+#        call FF.FinalizeToFile as FinalizeDVPEPPERTbi { input: outdir = smalldir, file = CallVariants.dvp_tbi }
     }
 
     # Finalize
@@ -90,9 +93,9 @@ workflow PBCCSWholeGenome {
         File aligned_pbi = FinalizeAlignedPbi.gcs_path
 
         File? pbsv_vcf = FinalizePBSV.gcs_path
-        File? sniffles_vcf = FinalizeSniffles.gcs_path
-
-        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
-        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
+#        File? sniffles_vcf = FinalizeSniffles.gcs_path
+#
+#        File? dvp_phased_vcf = FinalizeDVPEPPERPhasedVcf.gcs_path
+#        File? dvp_phased_tbi = FinalizeDVPEPPERPhasedTbi.gcs_path
     }
 }
