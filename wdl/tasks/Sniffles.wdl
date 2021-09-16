@@ -25,13 +25,13 @@ task Sniffles {
         min_read_support: "[default-valued] minimum reads required to make a call"
         min_read_length:  "[default-valued] filter out reads below minimum read length"
         min_mq:           "[default-valued] minimum mapping quality to accept"
-
         chr:              "chr on which to call variants"
         prefix:           "prefix for output"
     }
 
     Int cpus = 8
     Int disk_size = 2*ceil(size([bam, bai], "GB"))
+    String fileoutput = if defined(chr) then "~{prefix}.{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
 
     command <<<
         set -x
@@ -39,6 +39,7 @@ task Sniffles {
         sniffles -t ~{cpus} \
                  -m ~{bam} \
                  -v ~{prefix}.~{chr}.sniffles.pre.vcf \
+                 -v {if defined(chr) then "~{prefix}.~{chr}.sniffles.pre.vcf"}.
                  -s ~{min_read_support} \
                  -r ~{min_read_length} \
                  -q ~{min_mq} \
