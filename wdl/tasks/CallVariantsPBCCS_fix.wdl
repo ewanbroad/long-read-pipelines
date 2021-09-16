@@ -9,9 +9,7 @@ version 1.0
 import "Structs.wdl"
 import "Utils.wdl"
 import "VariantUtils.wdl"
-
 import "DeepVariant.wdl" as DV
-
 import "PBSV.wdl"
 import "Sniffles.wdl"
 import "CuteSV.wdl"
@@ -99,12 +97,6 @@ workflow CallVariants {
             ref_dict = ref_dict,
             prefix   = prefix + ".pbsv"
     }
-
-
-
-
-
-
 
     output {
 
