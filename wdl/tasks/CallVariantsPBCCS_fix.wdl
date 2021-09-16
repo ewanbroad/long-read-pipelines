@@ -80,6 +80,14 @@ workflow CallVariants {
                 prefix        = prefix
         }
 
+        call Sniffles.Sniffles {
+            input:
+                bam    = SubsetBam.subset_bam,
+                bai    = SubsetBam.subset_bai,
+                chr    = contig,
+                prefix = prefix
+        }
+
 
 
     }
