@@ -11,6 +11,8 @@ task Sniffles {
         Int min_read_support = 2
         Int min_read_length = 1000
         Int min_mq = 20
+
+        String? chr
         String prefix
 
         RuntimeAttr? runtime_attr_override
@@ -23,6 +25,8 @@ task Sniffles {
         min_read_support: "[default-valued] minimum reads required to make a call"
         min_read_length:  "[default-valued] filter out reads below minimum read length"
         min_mq:           "[default-valued] minimum mapping quality to accept"
+
+        chr:              "chr on which to call variants"
         prefix:           "prefix for output"
     }
 
@@ -34,23 +38,23 @@ task Sniffles {
 
         sniffles -t ~{cpus} \
                  -m ~{bam} \
-                 -v ~{prefix}.sniffles.pre.vcf \
+                 -v ~{prefix}.~{chr}.sniffles.pre.vcf \
                  -s ~{min_read_support} \
                  -r ~{min_read_length} \
                  -q ~{min_mq} \
                  --num_reads_report -1 \
                  --genotype
 
-        touch ~{prefix}.sniffles.pre.vcf
+        touch ~{prefix}.~{chr}.sniffles.pre.vcf
 
-        cat ~{prefix}.sniffles.pre.vcf | \
+        cat ~{prefix}.~{chr}.sniffles.pre.vcf | \
             grep -v -e '##fileDate' | \
             awk '{ if ($1 ~ "^#" || $7 == "PASS") print $0 }' \
-            > ~{prefix}.sniffles.vcf
+            > ~{prefix}.~{chr}.sniffles.vcf
     >>>
 
     output {
-        File vcf = "~{prefix}.sniffles.vcf"
+        File vcf = "~{prefix}.~{chr}.sniffles.vcf"
     }
 
     #########################
