@@ -38,7 +38,6 @@ workflow PBAssembleWithHifiasm {
 
     String outdir = sub(gcs_out_root_dir, "/$", "") + "/PBAssembleWithHifiasm/~{prefix}"
 
-    # gather across (potential multiple) input CCS BAMs
     if (length(ccs_fqs) > 1) {
         call Utils.MergeFastqs as MergeAllFastqs { input: fastqs = ccs_fqs }
     }
@@ -53,12 +52,14 @@ workflow PBAssembleWithHifiasm {
 
     call QuastEval.Quast {
         input:
-            assemblies = [ Hifiasm.fa ]
+            assemblies = [Hifiasm.primary_tigs,
+                          Hifiasm.phased_tigs[0],
+                          Hifiasm.phased_tigs[1]]
     }
 
     call AV.CallAssemblyVariants {
         input:
-            asm_fasta = Hifiasm.fa,
+            asm_fasta = Hifiasm.primary_tigs,
             ref_fasta = ref_map['fasta'],
             participant_name = participant_name,
             prefix = prefix + ".hifiasm"
@@ -67,46 +68,62 @@ workflow PBAssembleWithHifiasm {
     # Finalize data
     String dir = outdir + "/assembly"
 
-    call FF.FinalizeToFile as FinalizeHifiasmGfa      { input: outdir = dir, file = Hifiasm.gfa, gzip_compress = true }
-    call FF.FinalizeToFile as FinalizeHifiasmFa       { input: outdir = dir, file = Hifiasm.fa,  gzip_compress = true }
+    call FF.FinalizeToFile as FinalizeHifiasmPrimaryGfa   { input: outdir = dir, file = Hifiasm.primary_gfa,  gzip_compress = true }
+    call FF.FinalizeToFile as FinalizeHifiasmPrimaryFa    { input: outdir = dir, file = Hifiasm.primary_tigs, gzip_compress = true }
 
-    call FF.FinalizeToDir  as FinalizeHifiasmHapTigs  { input: outdir = dir + "/haplotigs", files = Hifiasm.phased_contigs, gzip_compress = true }
+    call FF.FinalizeToFile as FinalizeHifiasmAlternateGfa   { input: outdir = dir, file = Hifiasm.alternate_gfa,  gzip_compress = true }
+    call FF.FinalizeToFile as FinalizeHifiasmAlternateFa    { input: outdir = dir, file = Hifiasm.alternate_tigs, gzip_compress = true }
+
+    # we prefer the primary files generated from the primary VS alternate, but if we decide to get that from the haplotig mode, simply finalize them
+
+    call FF.FinalizeAndCompress as FinalizeHifiasmHapGfas  { input: outdir = dir, files = Hifiasm.phased_gfas, prefix = prefix + ".haploGFAs" }
+    call FF.FinalizeAndCompress as FinalizeHifiasmHapTigs  { input: outdir = dir, files = Hifiasm.phased_tigs, prefix = prefix + ".haploTigs" }
 
     call FF.FinalizeToFile as FinalizeQuastReportHtml { input: outdir = dir, file = Quast.report_html }
     call FF.FinalizeToFile as FinalizeQuastReportTxt  { input: outdir = dir, file = Quast.report_txt }
+    scatter (report in Quast.quast_metrics) {
+        call FF.FinalizeToFile as FinalizeQuastIndividualSummary  { input: outdir = dir, file = report }
+    }
+    Map[String, String] metrics = read_map(Quast.quast_metrics[0])  # assuming the 0-th is the special
+
     call FF.FinalizeToFile as FinalizePaf             { input: outdir = dir, file = CallAssemblyVariants.paf }
     call FF.FinalizeToFile as FinalizePafToolsVcf     { input: outdir = dir, file = CallAssemblyVariants.paftools_vcf }
 
     output {
-        File hifiasm_gfa = FinalizeHifiasmGfa.gcs_path
-        File hifiasm_fa = FinalizeHifiasmFa.gcs_path
+        File hifiasm_primary_gfa  = FinalizeHifiasmPrimaryGfa.gcs_path
+        File hifiasm_primary_tigs = FinalizeHifiasmPrimaryFa.gcs_path
 
-        String hifiasm_haplotigs = FinalizeHifiasmHapTigs.gcs_dir
+        File hifiasm_haplogfas = FinalizeHifiasmHapGfas.gcs_path
+        File hifiasm_haplotigs = FinalizeHifiasmHapTigs.gcs_path
+
+        File hifiasm_alternate_gfa  = FinalizeHifiasmAlternateGfa.gcs_path
+        File hifiasm_alternate_tigs = FinalizeHifiasmAlternateFa.gcs_path
 
         File paf = FinalizePaf.gcs_path
         File paftools_vcf = FinalizePafToolsVcf.gcs_path
 
         File quast_report_html = FinalizeQuastReportHtml.gcs_path
-        File quast_report_txt = FinalizeQuastReportTxt.gcs_path
+        File quast_report_txt  = FinalizeQuastReportTxt.gcs_path
+        Array[File] individual_quast_summaries = FinalizeQuastIndividualSummary.gcs_path
 
-        # Int num_contigs = Quast.metrics['#_contigs']
-        # Int largest_contigs = Quast.metrics['Largest_contig']
-        # String total_length = Quast.metrics['Total_length']
-        # Float gc_pct = Quast.metrics['GC_(%)']
-        # Int n50 = Quast.metrics['N50']
-        # Int n75 = Quast.metrics['N75']
-        # Int l50 = Quast.metrics['L50']
-        # Int l75 = Quast.metrics['L75']
+    #     Int num_contigs = metrics['#_contigs']
+    #     Int largest_contigs = metrics['Largest_contig']
+    #     String total_length = metrics['Total_length']
+    #     Float gc_pct = metrics['GC_(%)']
+    #     Int n50 = metrics['N50']
+    #     Int n75 = metrics['N75']
+    #     Int l50 = metrics['L50']
+    #     Int l75 = metrics['L75']
 
-#        Float genome_fraction_pct = Quast.metrics['Genome_fraction_(%)']
-#        Int ng50 = Quast.metrics['NG50']
-#        Int nga50 = Quast.metrics['NGA50']
-#        Int total_aligned_length = Quast.metrics['Total_aligned_length']
-#        Int largest_alignment = Quast.metrics['Largest_alignment']
-#        Int unaligned_length = Quast.metrics['Unaligned_length']
-#        Float duplication_ratio = Quast.metrics['Duplication_ratio']
-#        Int num_misassemblies = Quast.metrics['#_misassemblies']
-#        Float num_mismatches_per_100_kbp = Quast.metrics['#_mismatches_per_100_kbp']
-#        Float num_indels_per_100_kbp = Quast.metrics['#_indels_per_100_kbp']
+    #    Float genome_fraction_pct = metrics['Genome_fraction_(%)']
+    #    Int ng50 = metrics['NG50']
+    #    Int nga50 = metrics['NGA50']
+    #    Int total_aligned_length = metrics['Total_aligned_length']
+    #    Int largest_alignment = metrics['Largest_alignment']
+    #    Int unaligned_length = metrics['Unaligned_length']
+    #    Float duplication_ratio = metrics['Duplication_ratio']
+    #    Int num_misassemblies = metrics['#_misassemblies']
+    #    Float num_mismatches_per_100_kbp = metrics['#_mismatches_per_100_kbp']
+    #    Float num_indels_per_100_kbp = metrics['#_indels_per_100_kbp']
     }
 }

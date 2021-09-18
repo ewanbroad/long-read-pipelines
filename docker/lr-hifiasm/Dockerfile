@@ -82,6 +82,9 @@ RUN apt-get -qqy update --fix-missing && \
                  ca-certificates \
                  curl \
                  gnupg \
+                 pigz \
+                 pv \
+                 tree \
                  zlib1g-dev && \
     apt-get -qqy clean && \
     rm -rf /tmp/* \

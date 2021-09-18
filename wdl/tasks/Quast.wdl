@@ -40,6 +40,12 @@ task Quast {
             sed 's/\s\+$//g' | \
             sed 's/>=/gt/g' | \
             tee report_map.txt
+
+        for i in `seq 2 $(awk '{print NF}' report_map.txt | sort -nu | tail -n 1)`
+        do
+            j=$(( i - 2 ))  # to make sure the primary, assuming it's the 0-th fed in to this task and the left-most value column
+            cut -d$'\t' -f1,${i} < report_map.txt > report_map_${j}.txt
+        done
     >>>
 
     output {
@@ -48,7 +54,7 @@ task Quast {
         File report_pdf = "quast_results/latest/report.pdf"
         Array[File] plots = glob("quast_results/latest/basic_stats/*.pdf")
 
-        Map[String, String] metrics = read_map("report_map.txt")
+        Array[File] quast_metrics = glob("report_map_*.txt")
     }
 
     ###################
