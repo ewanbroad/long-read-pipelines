@@ -1,0 +1,9 @@
+name: lr-graphaligner
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - samtools
+  - graphaligner
+prefix: /opt/conda/envs/lr-graphaligner
