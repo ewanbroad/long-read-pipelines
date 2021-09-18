@@ -5,13 +5,11 @@ version 1.0
 ######################################################################################
 
 import "tasks/Utils.wdl" as Utils
-import "tasks/CallVariantsONT.wdl" as VAR
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTDemuxMixedInfection {
     input {
-        File aligned_bam
-        File aligned_bai
+        File bam
         File ref_map_file
 
         String dir_prefix
@@ -19,8 +17,7 @@ workflow ONTDemuxMixedInfection {
     }
 
     parameter_meta {
-        bam:                "GCS path to aligned BAM file"
-        bai:                "GCS path to aligned BAM file index"
+        bam:                "GCS path to raw subread bam"
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"
@@ -32,21 +29,9 @@ workflow ONTDemuxMixedInfection {
 
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
-    call VAR.CallVariants {
-        input:
-            bam               = aligned_bam,
-            bai               = aligned_bai,
-
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            ref_dict          = ref_map['dict'],
-            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-            prefix            = dir_prefix
-    }
-
-    #call CreateVariantGraph {}
-    #call AlignReadsToGraph {}
+#    call CallVariants {}
+#    call CreateVariantGraph {}
+#    call AlignReadsToGraph {}
 
     # Finalize data
 #    String dir = outdir + "/assembly"
