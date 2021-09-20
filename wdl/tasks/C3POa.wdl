@@ -63,6 +63,7 @@ task Processing {
         grep 'Under len cutoff' out/c3poa.log | awk '{ print $4 }' > under_len_cutoff.txt
         grep 'Total reads' out/c3poa.log | awk '{ print $3 }' > total_reads.txt
         grep 'Reads after preprocessing' out/c3poa.log | awk '{ print $4 }' > reads_after_preprocessing.txt
+        grep -c '>' out/10x_Splint_*/R2C2_Consensus.fasta > reads_after_consensus.txt
 
         tree -h
     >>>
@@ -83,6 +84,7 @@ task Processing {
         Int under_len_cutoff = read_int("under_len_cutoff.txt")
         Int total_reads = read_int("total_reads.txt")
         Int reads_after_preprocessing = read_int("reads_after_preprocessing.txt")
+        Int reads_after_consensus = read_int("reads_after_consensus.txt")
     }
 
     #########################
