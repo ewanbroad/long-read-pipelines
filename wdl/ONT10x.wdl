@@ -54,6 +54,14 @@ workflow ONT10x {
 
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
+        call AR.Minimap2 as AlignSubreads {
+            input:
+                reads      = read_lines(PartitionFastqManifest.manifest_chunks[0]),
+                ref_fasta  = ref_map['fasta'],
+                RG         = rg_subreads,
+                map_preset = "splice"
+        }
+
         scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
             call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
 
