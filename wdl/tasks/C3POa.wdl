@@ -63,7 +63,7 @@ task Processing {
         grep 'Under len cutoff' out/c3poa.log | awk '{ print $4 }' > under_len_cutoff.txt
         grep 'Total reads' out/c3poa.log | awk '{ print $3 }' > total_reads.txt
         grep 'Reads after preprocessing' out/c3poa.log | awk '{ print $4 }' > reads_after_preprocessing.txt
-        grep -c '>' out/10x_Splint_*/R2C2_Consensus.fasta > reads_after_consensus.txt
+        cat out/10x_Splint_*/R2C2_Consensus.fasta | grep -c '>' > reads_after_consensus.txt
 
         tree -h
     >>>
