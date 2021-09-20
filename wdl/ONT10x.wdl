@@ -55,7 +55,7 @@ workflow ONT10x {
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
         scatter (i in range(length(PartitionFastqManifest.manifest_chunks))) {
-            File manifest_chunk = PartitionFastqManifest.manifest_chunks[0]
+            File manifest_chunk = PartitionFastqManifest.manifest_chunks[i]
 
             call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
 
@@ -170,21 +170,19 @@ workflow ONT10x {
 
 #    call Utils.MergeBams as MergeAllAnnotated { input: bams = MergeAnnotated.merged_bam, prefix = "~{participant_name}.annotated" }
 
-    if (length(MergeConsensus1.merged_bam) > 1) {
-        call Utils.MergeBams as MergeAllConsensus1 { input: bams = MergeConsensus1.merged_bam, prefix = "~{participant_name}.consensus1" }
-        call Utils.MergeBams as MergeAllConsensus2 { input: bams = MergeConsensus2.merged_bam, prefix = "~{participant_name}.consensus2" }
-        call Utils.MergeBams as MergeAllConsensus3 { input: bams = MergeConsensus3.merged_bam, prefix = "~{participant_name}.consensus3" }
-        call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, prefix = "~{participant_name}.consensus4" }
-    }
+    call Utils.MergeBams as MergeAllConsensus1 { input: bams = MergeConsensus1.merged_bam, prefix = "~{participant_name}.consensus1" }
+    call Utils.MergeBams as MergeAllConsensus2 { input: bams = MergeConsensus2.merged_bam, prefix = "~{participant_name}.consensus2" }
+    call Utils.MergeBams as MergeAllConsensus3 { input: bams = MergeConsensus3.merged_bam, prefix = "~{participant_name}.consensus3" }
+    call Utils.MergeBams as MergeAllConsensus4 { input: bams = MergeConsensus4.merged_bam, prefix = "~{participant_name}.consensus4" }
 
-    File consensus_bam1 = select_first([MergeAllConsensus1.merged_bam, MergeConsensus1.merged_bam[0]])
-    File consensus_bai1 = select_first([MergeAllConsensus1.merged_bai, MergeConsensus1.merged_bai[0]])
-    File consensus_bam2 = select_first([MergeAllConsensus2.merged_bam, MergeConsensus2.merged_bam[0]])
-    File consensus_bai2 = select_first([MergeAllConsensus2.merged_bai, MergeConsensus2.merged_bai[0]])
-    File consensus_bam3 = select_first([MergeAllConsensus3.merged_bam, MergeConsensus3.merged_bam[0]])
-    File consensus_bai3 = select_first([MergeAllConsensus3.merged_bai, MergeConsensus3.merged_bai[0]])
-    File consensus_bam4 = select_first([MergeAllConsensus4.merged_bam, MergeConsensus4.merged_bam[0]])
-    File consensus_bai4 = select_first([MergeAllConsensus4.merged_bai, MergeConsensus4.merged_bai[0]])
+    File consensus_bam1 = MergeAllConsensus1.merged_bam
+    File consensus_bai1 = MergeAllConsensus1.merged_bai
+    File consensus_bam2 = MergeAllConsensus2.merged_bam
+    File consensus_bai2 = MergeAllConsensus2.merged_bai
+    File consensus_bam3 = MergeAllConsensus3.merged_bam
+    File consensus_bai3 = MergeAllConsensus3.merged_bai
+    File consensus_bam4 = MergeAllConsensus4.merged_bam
+    File consensus_bai4 = MergeAllConsensus4.merged_bai
 
     call C3.Annotate as Annotate1 { input: bam = consensus_bam1 }
     call C3.Annotate as Annotate2 { input: bam = consensus_bam2 }
