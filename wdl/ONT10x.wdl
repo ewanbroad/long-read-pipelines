@@ -54,16 +54,27 @@ workflow ONT10x {
 
         call ONT.PartitionManifest as PartitionFastqManifest { input: manifest = ListFastqs.manifest, N = num_shards }
 
-        call AR.Minimap2 as AlignSubreads {
-            input:
-                reads      = read_lines(PartitionFastqManifest.manifest_chunks[0]),
-                ref_fasta  = ref_map['fasta'],
-                RG         = rg_subreads,
-                map_preset = "splice"
-        }
+        scatter (i in range(length(PartitionFastqManifest.manifest_chunks))) {
+            File manifest_chunk = PartitionFastqManifest.manifest_chunks[0]
 
-        scatter (manifest_chunk in PartitionFastqManifest.manifest_chunks) {
             call C3.C3POa as C3POa { input: manifest_chunk = manifest_chunk, ref_fasta = ref_map['fasta'] }
+
+            if (i == 0) {
+                scatter (b in zip([1, 2, 3, 4], [ C3POa.subreads1, C3POa.subreads2, C3POa.subreads3, C3POa.subreads4 ])) {
+                    Int splint_num = b.left
+                    File fq = b.right
+
+                    String rg_sub = "@RG\\tID:~{SID}.subreads~{splint_num}\\tSM:~{SM}\\tPL:~{PL}\\tPU:~{PU}\\tDT:~{DT}"
+
+                    call AR.Minimap2 as AlignSubreads {
+                        input:
+                            reads      = [ fq ],
+                            ref_fasta  = ref_map['fasta'],
+                            RG         = rg_sub,
+                            map_preset = "splice"
+                    }
+                }
+            }
 
             scatter (a in zip([1, 2, 3, 4], [ C3POa.consensus1, C3POa.consensus2, C3POa.consensus3, C3POa.consensus4 ])) {
                 Int splint_num = a.left
