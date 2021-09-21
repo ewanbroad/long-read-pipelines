@@ -35,15 +35,8 @@ task Sniffles {
 
     String fileoutput = if defined(chr) then "~{prefix}.{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
 
-    if defined(chr) {
-        String chr_condition = "~{prefix}.~{chr}.sniffles.pre.vcf"
-      }
-    else {
-        String chr_condition = "~{prefix}.sniffles.pre.vcf"
-         }
+    String chr_condition = if defined(chr) then "~{prefix}.~{chr}.sniffles.pre.vcf" else "~{prefix}.sniffles.pre.vcf"
 
-
-    String chr_condition = if defined(chr) then "~{prefix}.{chr}.sniffles.vcf" else "~{prefix}.sniffles.vcf"
 
 
        command <<<
@@ -68,8 +61,7 @@ task Sniffles {
     >>>
 
     output {
-        File vcf = ~{chr_condition}
-        #File vcf = ~{fileoutput}
+        File vcf = chr_condition
     }
 
     #########################
