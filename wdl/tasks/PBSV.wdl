@@ -17,7 +17,7 @@ task Discover {
         File ref_fasta_fai
         File? tandem_repeat_bed
 
-        String chr
+        String? chr
         String prefix
 
         RuntimeAttr? runtime_attr_override
