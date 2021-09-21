@@ -19,20 +19,33 @@ workflow C3POa {
     call Postprocessing as Postprocessing3 { input: consensus = Processing.consensus3 }
     call Postprocessing as Postprocessing4 { input: consensus = Processing.consensus4 }
 
+    call Utils.Sum as SumPostprocessing { input: ints = [ Postprocessing1.reads_after_postprocessing,
+                                                          Postprocessing2.reads_after_postprocessing,
+                                                          Postprocessing3.reads_after_postprocessing,
+                                                          Postprocessing4.reads_after_postprocessing ] }
+
     output {
         File subreads1 = Processing.subreads1
         File subreads2 = Processing.subreads2
         File subreads3 = Processing.subreads3
         File subreads4 = Processing.subreads4
 
-        File consensus1 = Postprocessing1.consensus_full
-        File consensus2 = Postprocessing2.consensus_full
-        File consensus3 = Postprocessing3.consensus_full
-        File consensus4 = Postprocessing4.consensus_full
+        File consensus1 = Processing.consensus1
+        File consensus2 = Processing.consensus2
+        File consensus3 = Processing.consensus3
+        File consensus4 = Processing.consensus4
 
-        Int no_splint_reads  = Processing.no_splint_reads
-        Int under_len_cutoff = Processing.under_len_cutoff
-        Int total_reads      = Processing.total_reads
+        File post1 = Postprocessing1.consensus_full
+        File post2 = Postprocessing2.consensus_full
+        File post3 = Postprocessing3.consensus_full
+        File post4 = Postprocessing4.consensus_full
+
+        Int no_splint_reads            = Processing.no_splint_reads
+        Int under_len_cutoff           = Processing.under_len_cutoff
+        Int total_reads                = Processing.total_reads
+        Int reads_after_preprocessing  = Processing.reads_after_preprocessing
+        Int reads_after_consensus      = Processing.reads_after_consensus
+        Int reads_after_postprocessing = SumPostprocessing.sum
     }
 }
 
@@ -127,6 +140,8 @@ task Postprocessing {
             -a /C3POa/adapter.fasta \
             -o ./
 
+        cat R2C2_full_length_consensus_reads.fasta | grep -c '>' > reads_after_postprocessing.txt
+
         tree -h
     >>>
 
@@ -134,6 +149,7 @@ task Postprocessing {
         File consensus_full = "R2C2_full_length_consensus_reads.fasta"
         File consensus_left = "R2C2_full_length_consensus_reads_left_splint.fasta"
         File consensus_right = "R2C2_full_length_consensus_reads_right_splint.fasta"
+        Int reads_after_postprocessing = read_int("reads_after_postprocessing.txt")
     }
 
     #########################
