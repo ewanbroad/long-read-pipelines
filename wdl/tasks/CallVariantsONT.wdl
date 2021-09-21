@@ -165,6 +165,18 @@ workflow CallVariants {
                 bams = Pepper.hap_tagged_bam,
                 prefix = prefix +  ".MARGIN_PHASED.PEPPER_SNP_MARGIN.haplotagged"
         }
+
+        call Clair.Clair {
+            input:
+                bam           = SubsetBam.subset_bam,
+                bai           = SubsetBam.subset_bai,
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                sites_vcf     = sites_vcf,
+                sites_vcf_tbi = sites_vcf_tbi,
+                preset        = "ont",
+                chr           = contig
+        }
     }
     
     ######################################################################
@@ -257,6 +269,13 @@ workflow CallVariants {
         }
         call Utils.InferSampleName as infer {input: bam = bam, bai = bai}
         call VariantUtils.FixSnifflesVCF as ZipAndIndexSniffles {input: vcf = SnifflesSlow.vcf, sample_name = infer.sample_name}
+    }
+
+    call VariantUtils.MergePerChrCalls as MergeClairVCFs {
+        input:
+            vcfs     = Clair.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".clair"
     }
 
     call VariantUtils.MergePerChrCalls as MergeClairVCFs {
