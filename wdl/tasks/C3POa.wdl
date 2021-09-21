@@ -132,7 +132,7 @@ task Postprocessing {
     Int disk_size = 2*ceil(size(consensus, "GB"))
 
     command <<<
-        set -euxo pipefail
+        set -x
 
         python3 /C3POa/C3POa_postprocessing.py \
             -i ~{consensus} \
