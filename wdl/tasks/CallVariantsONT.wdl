@@ -12,6 +12,7 @@ import "VariantUtils.wdl"
 
 import "DeepVariant.wdl" as DV
 import "Longshot.wdl"
+import "Clair.wdl"
 
 import "PBSV.wdl"
 import "Sniffles.wdl"
@@ -51,7 +52,7 @@ workflow CallVariants {
     call Utils.MakeChrIntervalList {
         input:
             ref_dict = ref_dict,
-            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV']
+            filter = ['random', 'chrUn', 'decoy', 'alt', 'HLA', 'EBV', 'Pf_M76611']
     }
 
     scatter (c in MakeChrIntervalList.chrs) {
@@ -113,6 +114,18 @@ workflow CallVariants {
                 phase         = false,
                 chr           = contig
         }
+
+        call Clair.Clair {
+            input:
+                bam           = SubsetBam.subset_bam,
+                bai           = SubsetBam.subset_bai,
+                ref_fasta     = ref_fasta,
+                ref_fasta_fai = ref_fasta_fai,
+                sites_vcf     = sites_vcf,
+                sites_vcf_tbi = sites_vcf_tbi,
+                preset        = "ont",
+                chr           = contig
+        }
     }
 
     call VariantUtils.MergePerChrCalls as MergePBSVVCFs {
@@ -157,6 +170,13 @@ workflow CallVariants {
             prefix   = prefix + ".longshot"
     }
 
+    call VariantUtils.MergePerChrCalls as MergeClairVCFs {
+        input:
+            vcfs     = Clair.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".clair"
+    }
+
     output {
 #        File dvp_phased_vcf = MergeDeepVariantPhasedVCFs.vcf
 #        File dvp_phased_tbi = MergeDeepVariantPhasedVCFs.tbi
@@ -167,6 +187,9 @@ workflow CallVariants {
 
         File longshot_vcf = MergeLongshotVCFs.vcf
         File longshot_tbi = MergeLongshotVCFs.tbi
+
+        File clair_vcf = MergeClairVCFs.vcf
+        File clair_tbi = MergeClairVCFs.tbi
 
         File pbsv_vcf = MergePBSVVCFs.vcf
         File sniffles_vcf = MergeSnifflesVCFs.vcf
