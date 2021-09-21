@@ -259,6 +259,13 @@ workflow CallVariants {
         call VariantUtils.FixSnifflesVCF as ZipAndIndexSniffles {input: vcf = SnifflesSlow.vcf, sample_name = infer.sample_name}
     }
 
+    call VariantUtils.MergePerChrCalls as MergeClairVCFs {
+        input:
+            vcfs     = Clair.vcf,
+            ref_dict = ref_dict,
+            prefix   = prefix + ".clair"
+    }
+
     output {
         File sniffles_vcf = select_first([MergeSnifflesVCFs.vcf, ZipAndIndexSniffles.sortedVCF])
         File sniffles_tbi = select_first([MergeSnifflesVCFs.tbi, ZipAndIndexSniffles.tbi])
