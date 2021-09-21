@@ -122,6 +122,3 @@ workflow CallVariants {
     }
 
 }
-
-
-
