@@ -223,7 +223,7 @@ task Annotate {
         RuntimeAttr? runtime_attr_override
     }
 
-    Int disk_size = 3*ceil(size(bam, "GB"))
+    Int disk_size = 20*ceil(size(bam, "GB"))
 
     command <<<
         set -euxo pipefail
