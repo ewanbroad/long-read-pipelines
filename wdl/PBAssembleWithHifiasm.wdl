@@ -68,11 +68,11 @@ workflow PBAssembleWithHifiasm {
     # Finalize data
     String dir = outdir + "/assembly"
 
-    call FF.FinalizeToFile as FinalizeHifiasmPrimaryGfa   { input: outdir = dir, file = Hifiasm.primary_gfa,  gzip_compress = true }
-    call FF.FinalizeToFile as FinalizeHifiasmPrimaryFa    { input: outdir = dir, file = Hifiasm.primary_tigs, gzip_compress = true }
+    call FF.CompressAndFinalize as FinalizeHifiasmPrimaryGfa   { input: outdir = dir, file = Hifiasm.primary_gfa,  gzip_compress = true }
+    call FF.CompressAndFinalize as FinalizeHifiasmPrimaryFa    { input: outdir = dir, file = Hifiasm.primary_tigs, gzip_compress = true }
 
-    call FF.FinalizeToFile as FinalizeHifiasmAlternateGfa   { input: outdir = dir, file = Hifiasm.alternate_gfa,  gzip_compress = true }
-    call FF.FinalizeToFile as FinalizeHifiasmAlternateFa    { input: outdir = dir, file = Hifiasm.alternate_tigs, gzip_compress = true }
+    call FF.CompressAndFinalize as FinalizeHifiasmAlternateGfa   { input: outdir = dir, file = Hifiasm.alternate_gfa,  gzip_compress = true }
+    call FF.CompressAndFinalize as FinalizeHifiasmAlternateFa    { input: outdir = dir, file = Hifiasm.alternate_tigs, gzip_compress = true }
 
     # we prefer the primary files generated from the primary VS alternate, but if we decide to get that from the haplotig mode, simply finalize them
 
