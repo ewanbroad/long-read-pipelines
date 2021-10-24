@@ -80,6 +80,10 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/VerifyFingerprint.wdl
   testParameterFiles:
+- name: DownloadFromFTP
+  subclass: wdl
+  primaryDescriptorPath: /wdl/DownloadFromFTP.wdl
+  testParameterFiles:
 - name: DownloadFromHudsonAlpha
   subclass: wdl
   primaryDescriptorPath: /wdl/DownloadFromHudsonAlpha.wdl
