@@ -51,6 +51,20 @@ workflow PBCCSIsoSeq {
     File bam = select_first([MergeAllReads.merged_bam, ccs_bams[0]])
     File pbi = select_first([IndexCCSUnalignedReads.pbi, ccs_pbis[0]])
 
+    # select a small number of reads to process
+    call Utils.SelectNReadsFromBam { input: bam = bam }
+
+    # align raw reads
+    call PB.Align as AlignSelectedReads {
+        input:
+            bam          = SelectNReadsFromBam.selected_bam,
+            ref_fasta    = ref_map['fasta'],
+            sample_name  = participant_name,
+            drop_per_base_N_pulse_tags = true,
+            map_preset   = "ISOSEQ",
+            prefix       = participant_name,
+    }
+
     # demultiplex CCS-ed BAM
     call PB.Demultiplex {
         input:
@@ -108,8 +122,8 @@ workflow PBCCSIsoSeq {
         # store the demultiplexing results into designated bucket
         ##########
 
-        String adir = outdir + "/" + BC + "/alignments"
-        String tdir = outdir + "/" + BC + "/transcripts"
+        String adir = outdir + "/alignments/" + BC
+        String tdir = outdir + "/transcripts/" + BC
 
         call FF.FinalizeToFile as FinalizeAlignedTranscriptsBam { input: outdir = adir, file = AlignTranscripts.aligned_bam }
         call FF.FinalizeToFile as FinalizeAlignedTranscriptsBai { input: outdir = adir, file = AlignTranscripts.aligned_bai }
