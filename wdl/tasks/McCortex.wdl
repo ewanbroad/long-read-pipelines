@@ -7,12 +7,12 @@ task Assemble {
         File reads
         String sample
         Int k = 31
-        Int mem = 8
 
         RuntimeAttr? runtime_attr_override
     }
 
     Int disk_size = 3*(ceil(size(reads, "GB")))
+    Int mem = 4*(ceil(size(reads, "GB")))
 
     command <<<
         set -euxo pipefail
@@ -25,20 +25,21 @@ task Assemble {
         fi
 
         mccortex ~{k} build -m ~{mem}G -S -k ~{k} -s ~{sample} $SEQ_TYPE ~{reads} ~{sample}.k~{k}.ctx
+        mccortex ~{k} clean -m ~{mem}G -S -B 1 -o ~{sample}.k~{k}.clean.ctx ~{sample}.k~{k}.ctx
     >>>
 
     output {
-        File ctx = "~{sample}.k~{k}.ctx"
+        File ctx = "~{sample}.k~{k}.clean.ctx"
     }
 
     ###################
     RuntimeAttr default_attr = object {
         cpu_cores:             1,
-        mem_gb:                mem,
+        mem_gb:                mem + 2,
         disk_gb:               disk_size,
         boot_disk_gb:          10,
-        preemptible_tries:     3,
-        max_retries:           2,
+        preemptible_tries:     1,
+        max_retries:           0,
         docker:                "us.gcr.io/broad-dsp-lrma/lr-mccortex:1.0.0"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
