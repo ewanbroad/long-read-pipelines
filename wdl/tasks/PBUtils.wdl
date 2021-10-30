@@ -353,6 +353,7 @@ task Demultiplex {
         Boolean isoseq          = false
         Boolean peek_guess      = false
         Boolean dump_removed    = false
+        Boolean dump_clips      = false
         Boolean split_bam_named = false
         Int peek                = 0
         Int min_score           = 0
@@ -375,6 +376,7 @@ task Demultiplex {
             ~{if guess_min_count > 0 then "--guess-min-count ~{guess_min_count}" else ""} \
             ~{if peek > 0 then "--peek ~{peek}" else ""} \
             ~{if dump_removed then "--dump-removed" else ""} \
+            ~{if dump_clips then "--dump-clips" else ""} \
             ~{if split_bam_named then "--split-bam-named" else ""} \
             ~{bam} \
             ~{barcode_file} \
@@ -396,6 +398,91 @@ task Demultiplex {
     RuntimeAttr default_attr = object {
         cpu_cores:          2,
         mem_gb:             8,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task Tag {
+    input {
+        File bam
+        String design = "T-12U-16B"
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+    String out = basename(bam, ".bam") + ".tagged.bam"
+
+    command <<<
+        set -euxo pipefail
+
+        isoseq3 tag ~{bam} ~{out} --design ~{design}
+    >>>
+
+    output {
+        File tagged_bam = out
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             4,
+        disk_gb:            disk_size,
+        boot_disk_gb:       10,
+        preemptible_tries:  0,
+        max_retries:        0,
+        docker:             "us.gcr.io/broad-dsp-lrma/lr-pb:0.1.29"
+    }
+    RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
+    runtime {
+        cpu:                    select_first([runtime_attr.cpu_cores,         default_attr.cpu_cores])
+        memory:                 select_first([runtime_attr.mem_gb,            default_attr.mem_gb]) + " GiB"
+        disks: "local-disk " +  select_first([runtime_attr.disk_gb,           default_attr.disk_gb]) + " HDD"
+        bootDiskSizeGb:         select_first([runtime_attr.boot_disk_gb,      default_attr.boot_disk_gb])
+        preemptible:            select_first([runtime_attr.preemptible_tries, default_attr.preemptible_tries])
+        maxRetries:             select_first([runtime_attr.max_retries,       default_attr.max_retries])
+        docker:                 select_first([runtime_attr.docker,            default_attr.docker])
+    }
+}
+
+task Dedup {
+    input {
+        File bam
+
+        RuntimeAttr? runtime_attr_override
+    }
+
+    Int disk_size = 4*ceil(size(bam, "GB")) + 1
+    String out = basename(bam, ".bam") + ".deduped.bam"
+
+    command <<<
+        set -euxo pipefail
+
+        isoseq3 dedup ~{bam} ~{out} --verbose
+    >>>
+
+    output {
+        File deduped_bam = out
+    }
+
+    #########################
+    RuntimeAttr default_attr = object {
+        cpu_cores:          2,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  0,
@@ -437,7 +524,7 @@ task MakeDetailedDemultiplexingReport {
     #########################
     RuntimeAttr default_attr = object {
         cpu_cores:          1,
-        mem_gb:             16,
+        mem_gb:             32,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
         preemptible_tries:  3,
