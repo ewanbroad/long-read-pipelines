@@ -1,4 +1,4 @@
-VERSION = 0.1.0
+VERSION = 4.2 # Should match the SQANTI3 version number
 TAG1 = quay.io/broad-long-read-pipelines/lr-sqanti:$(VERSION)
 TAG2 = quay.io/broad-long-read-pipelines/lr-sqanti:latest
 TAG3 = us.gcr.io/broad-dsp-lrma/lr-sqanti:$(VERSION)

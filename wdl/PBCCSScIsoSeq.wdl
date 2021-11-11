@@ -19,6 +19,7 @@ workflow PBCCSScIsoSeq {
         Array[File] ccs_pbis
 
         File ref_map_file
+        File ref_gtf
         String participant_name
         File barcode_file
 
@@ -119,6 +120,13 @@ workflow PBCCSScIsoSeq {
 
         # create a BED file that indicates where the BAM file has coverage
         call Utils.BamToBed { input: bam = AlignTranscripts.aligned_bam, prefix = BC }
+
+        call PB.QCTranscripts {
+            input:
+                bam = AlignTranscripts.aligned_bam,
+                ref_fasta = ref_map['fasta'],
+                ref_gtf = ref_gtf,
+        }
 
         ##########
         # store the demultiplexing results into designated bucket
