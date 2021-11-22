@@ -10,7 +10,7 @@ version 1.0
 import "tasks/PBUtils.wdl" as PB
 import "tasks/Utils.wdl" as Utils
 import "tasks/AlignReads.wdl" as AR
-import "tasks/Tama.wdl" as TAMA
+import "tasks/SQANTI.wdl" as SQANTI
 import "tasks/Finalize.wdl" as FF
 
 workflow PBCCSScIsoSeq {
@@ -121,11 +121,12 @@ workflow PBCCSScIsoSeq {
         # create a BED file that indicates where the BAM file has coverage
         call Utils.BamToBed { input: bam = AlignTranscripts.aligned_bam, prefix = BC }
 
-        call PB.QCTranscripts {
+        call SQANTI.QC {
             input:
                 bam = AlignTranscripts.aligned_bam,
                 ref_fasta = ref_map['fasta'],
                 ref_gtf = ref_gtf,
+                prefix = BC
         }
 
         ##########
@@ -134,10 +135,15 @@ workflow PBCCSScIsoSeq {
 
         String adir = outdir + "/alignments/" + BC
         String tdir = outdir + "/transcripts/" + BC
+        String qdir = outdir + "/qc/" + BC
 
         call FF.FinalizeToFile as FinalizeAlignedTranscriptsBam { input: outdir = adir, file = AlignTranscripts.aligned_bam }
         call FF.FinalizeToFile as FinalizeAlignedTranscriptsBai { input: outdir = adir, file = AlignTranscripts.aligned_bai }
         call FF.FinalizeToFile as FinalizeAlignedTranscriptsBed { input: outdir = adir, file = BamToBed.bed }
+
+        call FF.FinalizeToFile as FinalizeClassifications { input: outdir = qdir, file = QC.classification }
+        call FF.FinalizeToFile as FinalizeJunctions { input: outdir = qdir, file = QC.junctions }
+        call FF.FinalizeToFile as FinalizeReport { input: outdir = qdir, file = QC.report }
     }
 
     # merge demultiplexed BAMs into a single BAM (one readgroup per file)
