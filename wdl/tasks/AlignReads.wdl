@@ -44,7 +44,7 @@ task Minimap2 {
         elif [[ "$FILE" =~ \.fasta.gz$ ]] || [[ "$FILE" =~ \.fa.gz$ ]]; then
             find . \( -name '*.fasta.gz' -or -name '*.fa.gz' \) -not -name '~{basename(ref_fasta)}' -exec zcat {} \; | python3 /usr/local/bin/cat_as_fastq.py | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         elif [[ "$FILE" =~ \.bam$ ]]; then
-            samtools fastq $FILES | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
+            samtools fastq $FILE | minimap2 $MAP_PARAMS - | samtools sort $SORT_PARAMS -
         else
             echo "Did not understand file format for '$FILE'"
             exit 1
