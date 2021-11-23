@@ -19,7 +19,7 @@ task QC {
         set -euxo pipefail
 
         samtools view -h ~{bam} > ~{prefix}.sam
-        python3 /cDNA_Cupcake/sequence/sam_to_collapsed_gff.py ~{prefix}.sam
+        python3 /cDNA_Cupcake/sequence/sam_to_collapsed_gff.py ~{prefix}.sam > /dev/null 2>&1
         python3 /SQANTI3/sqanti3_qc.py --report pdf -t 4 ~{prefix}.collapsed.gff ~{ref_gtf} ~{ref_fasta}
     >>>
 

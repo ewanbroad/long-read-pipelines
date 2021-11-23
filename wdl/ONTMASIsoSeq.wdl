@@ -9,6 +9,7 @@ version 1.0
 import "tasks/ONTUtils.wdl" as ONT
 import "tasks/Utils.wdl" as Utils
 import "tasks/NanoPlot.wdl" as NP
+import "tasks/SQANTI.wdl"
 import "tasks/AlignReads.wdl" as AR
 import "tasks/Finalize.wdl" as FF
 
@@ -19,6 +20,8 @@ workflow ONTMASIsoSeq {
         String model_name
 
         File ref_map_file
+        File ref_gtf
+
         String participant_name
         String prefix
         Int num_shards = 100
@@ -60,6 +63,7 @@ workflow ONTMASIsoSeq {
                 reads      = [ Process.extracted ],
                 ref_fasta  = ref_map['fasta'],
                 RG         = RG,
+                tags       = ['rq', 'np', 'YS', 'RC', 'XQ', 'YQ', 'YN', 'YV', 'YG', 'YK', 'zm', 'SG', 'CR', 'XC', 'XB', 'XF', 'ZU', 'XM', 'XU', 'it', 'ic', 'im', 'is', 'XA', 'ZS', 'XN'],
                 map_preset = "splice"
         }
     }
@@ -74,6 +78,14 @@ workflow ONTMASIsoSeq {
 
     call NP.NanoPlotFromRichFastqs { input: fastqs = read_lines(ListFilesOfType.manifest) }
     call NP.NanoPlotFromBam { input: bam = MergeAligned.merged_bam, bai = MergeAligned.merged_bai }
+
+#    call SQANTI.QC {
+#        input:
+#            bam = MergeAligned.merged_bam,
+#            ref_fasta = ref_map['fasta'],
+#            ref_gtf = ref_gtf,
+#            prefix = prefix
+#    }
 
     # Finalize data
     String adir = outdir + "/alignments"
@@ -99,6 +111,11 @@ workflow ONTMASIsoSeq {
     call FF.FinalizeToFile as FinalizeNPBamStats { input: outdir = outdir + "/stats/nanoplot/bam", file = NanoPlotFromBam.stats }
     call FF.FinalizeToDir as FinalizeNPBamPlots { input: outdir = outdir + "/stats/nanoplot/bam", files = NanoPlotFromBam.plots }
 
+#    String qdir = outdir + "/stats/transcripts/"
+#    call FF.FinalizeToFile as FinalizeClassifications { input: outdir = qdir, file = QC.classification }
+#    call FF.FinalizeToFile as FinalizeJunctions { input: outdir = qdir, file = QC.junctions }
+#    call FF.FinalizeToFile as FinalizeReport { input: outdir = qdir, file = QC.report }
+
     output {
         File merged_bam = FinalizeBam.gcs_path
         File merged_bai = FinalizeBai.gcs_path
@@ -113,6 +130,10 @@ workflow ONTMASIsoSeq {
 
         File nanoplot_bam_stats = FinalizeNPBamStats.gcs_path
         File nanoplot_bam_dir = FinalizeNPBamPlots.gcs_dir
+
+        File classifications = FinalizeClassifications.gcs_path
+        File junctions = FinalizeJunctions.gcs_path
+        File report = FinalizeReport.gcs_path
     }
 }
 
