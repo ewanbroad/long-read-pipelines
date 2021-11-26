@@ -37,7 +37,7 @@ workflow ONTDemuxMixedInfection {
             recurse = true
     }
 
-    call Utils.Cat as CombineFastqs { input: files = ListFilesOfType.files, out = "all.fq.gz" }
+    call Utils.Cat as CombineFastqs { input: files = ListFilesOfType.files, out = "all.fq" }
 
     call OVLP.Minimap2 {
         input:
