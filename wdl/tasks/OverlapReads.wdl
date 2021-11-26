@@ -24,7 +24,7 @@ task Minimap2 {
 
     Int disk_size = 1 + 3*ceil(size(reads, "GB"))
 
-    Int mem = 30
+    Int mem = 64
 
     command <<<
         set -euxo pipefail
