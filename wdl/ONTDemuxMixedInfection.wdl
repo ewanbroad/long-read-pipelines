@@ -18,8 +18,7 @@ workflow ONTDemuxMixedInfection {
     }
 
     parameter_meta {
-        bam:                "GCS path to aligned BAM file"
-        bai:                "GCS path to aligned BAM file index"
+        fastq_dir:          "GCS path to fastq directory"
         ref_map_file:       "table indicating reference sequence and auxillary file locations"
 
         gcs_out_root_dir:   "GCS bucket to store the reads, variants, and metrics files"

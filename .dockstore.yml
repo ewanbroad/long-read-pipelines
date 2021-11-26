@@ -100,3 +100,7 @@ workflows:
   subclass: wdl
   primaryDescriptorPath: /wdl/ONTSelectSamplesForPangenome.wdl
   testParameterFiles:
+- name: ONTDemuxMixedInfection
+  subclass: wdl
+  primaryDescriptorPath: /wdl/ONTDemuxMixedInfection.wdl
+  testParameterFiles:
