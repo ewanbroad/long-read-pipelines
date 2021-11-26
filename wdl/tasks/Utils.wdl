@@ -965,7 +965,7 @@ task MergeBams {
             -p -c --no-PG \
             -@ 2 \
             --write-index \
-            "~{prefix}.bam##idx##~{prefix}.bam.bai"
+            "~{prefix}.bam##idx##~{prefix}.bam.bai" \
             ~{sep=" " bams}
     >>>
 
@@ -1338,10 +1338,15 @@ task Cat {
 
         HAS_HEADER=~{true='1' false='0' has_header}
 
+        COMPRESS="cat"
+        if [[ "~{out}" =~ \.gz$ ]];
+           COMPRESS="gzip"
+        fi
+
         if [ HAS_HEADER == 1 ]; then
-            ((head -1 ~{files[0]}) && (cat ~{sep=' ' files} | xargs -n 1 tail -n +2)) > ~{out}
+            ((head -1 ~{files[0]}) && (cat ~{sep=' ' files} | xargs -n 1 tail -n +2)) | $COMPRESS > ~{out}
         else
-            cat ~{sep=' ' files} > ~{out}
+            cat ~{sep=' ' files} | $COMPRESS > ~{out}
         fi
     >>>
 

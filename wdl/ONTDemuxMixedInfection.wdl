@@ -5,13 +5,12 @@ version 1.0
 ######################################################################################
 
 import "tasks/Utils.wdl" as Utils
-import "tasks/CallVariantsONT.wdl" as VAR
+import "tasks/OverlapReads.wdl" as OVLP
 import "tasks/Finalize.wdl" as FF
 
 workflow ONTDemuxMixedInfection {
     input {
-        File aligned_bam
-        File aligned_bai
+        String? fastq_dir
         File ref_map_file
 
         String dir_prefix
@@ -32,19 +31,22 @@ workflow ONTDemuxMixedInfection {
 
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
-#    call VAR.CallVariants {
-#        input:
-#            bam               = aligned_bam,
-#            bai               = aligned_bai,
-#
-#            ref_fasta         = ref_map['fasta'],
-#            ref_fasta_fai     = ref_map['fai'],
-#            ref_dict          = ref_map['dict'],
-#            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-#
-#            prefix            = dir_prefix
-#    }
-#
+    call Utils.ListFilesOfType {
+        input:
+            gcs_dir = select_first([fastq_dir]),
+            suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz' ],
+            recurse = true
+    }
+
+    call Utils.Cat as CombineFastqs { input: files = ListFilesOfType.files, out = "all.fq.gz" }
+
+    call OVLP.Minimap2 {
+        input:
+            reads = CombineFastqs.combined,
+            map_preset = 'ava-ont',
+            max_gap = 500
+    }
+
 #    call CreateVariantGraph {}
 #    call AlignReadsToGraph {}
 
