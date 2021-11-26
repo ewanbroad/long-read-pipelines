@@ -24,6 +24,7 @@ dependencies:
   - fontconfig=2.13.1=h6c09931_0
   - fonts-anaconda=1=h8fa9717_0
   - fonts-conda-ecosystem=1=hd3eb1b0_0
+  - fpa=0.5.1=h82fb495_2
   - freetype=2.11.0=h70c0345_0
   - fribidi=1.0.10=h7b6447c_0
   - g-ir-build-tools=1.70.0=py38h69e1f0e_1
