@@ -32,7 +32,7 @@ workflow ONTDemuxMixedInfection {
 
     call Utils.ListFilesOfType {
         input:
-            gcs_dir = select_first([fastq_dir]),
+            gcs_dir = fastq_dir,
             suffixes = [ '.fastq', '.fastq.gz', '.fq', '.fq.gz' ],
             recurse = true
     }

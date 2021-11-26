@@ -1339,7 +1339,7 @@ task Cat {
         HAS_HEADER=~{true='1' false='0' has_header}
 
         COMPRESS="cat"
-        if [[ "~{out}" =~ \.gz$ ]];
+        if [[ "~{out}" =~ \.gz$ ]]; then
            COMPRESS="gzip"
         fi
 
