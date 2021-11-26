@@ -10,7 +10,7 @@ import "tasks/Finalize.wdl" as FF
 
 workflow ONTDemuxMixedInfection {
     input {
-        String? fastq_dir
+        String fastq_dir
         File ref_map_file
 
         String dir_prefix
