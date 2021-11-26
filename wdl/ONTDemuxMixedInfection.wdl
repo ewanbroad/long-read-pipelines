@@ -32,21 +32,21 @@ workflow ONTDemuxMixedInfection {
 
     call Utils.ComputeGenomeLength { input: fasta = ref_map['fasta'] }
 
-    call VAR.CallVariants {
-        input:
-            bam               = aligned_bam,
-            bai               = aligned_bai,
-
-            ref_fasta         = ref_map['fasta'],
-            ref_fasta_fai     = ref_map['fai'],
-            ref_dict          = ref_map['dict'],
-            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
-
-            prefix            = dir_prefix
-    }
-
-    #call CreateVariantGraph {}
-    #call AlignReadsToGraph {}
+#    call VAR.CallVariants {
+#        input:
+#            bam               = aligned_bam,
+#            bai               = aligned_bai,
+#
+#            ref_fasta         = ref_map['fasta'],
+#            ref_fasta_fai     = ref_map['fai'],
+#            ref_dict          = ref_map['dict'],
+#            tandem_repeat_bed = ref_map['tandem_repeat_bed'],
+#
+#            prefix            = dir_prefix
+#    }
+#
+#    call CreateVariantGraph {}
+#    call AlignReadsToGraph {}
 
     # Finalize data
 #    String dir = outdir + "/assembly"
