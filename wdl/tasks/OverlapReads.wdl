@@ -8,7 +8,7 @@ task Minimap2 {
 
         String map_preset
         Int max_gap = 5000
-        Int num_threads = 4
+        Int num_threads = 16
 
         String prefix = "out"
         RuntimeAttr? runtime_attr_override
@@ -22,8 +22,7 @@ task Minimap2 {
         prefix:      "[default-valued] prefix for output PAF"
     }
 
-    Int disk_size = 1 + 3*ceil(size(reads, "GB"))
-
+    Int disk_size = 1 + 20*ceil(size(reads, "GB"))
     Int mem = 64
 
     command <<<
