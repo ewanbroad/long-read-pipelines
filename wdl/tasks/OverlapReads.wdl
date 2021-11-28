@@ -23,13 +23,12 @@ task Minimap2 {
     }
 
     Int disk_size = 1 + 20*ceil(size(reads, "GB"))
-    Int mem = 64
+    Int mem = 96
 
     command <<<
         set -euxo pipefail
 
-        MAP_PARAMS="-x ~{map_preset} -t ~{num_threads} -g ~{max_gap}"
-        minimap2 $MAP_PARAMS ~{reads} ~{reads} | gzip > ~{prefix}.paf.gz
+        minimap2 -x ~{map_preset} -t ~{num_threads} -g ~{max_gap} ~{reads} ~{reads} | gzip > ~{prefix}.paf.gz
     >>>
 
     output {
@@ -42,8 +41,8 @@ task Minimap2 {
         mem_gb:             mem,
         disk_gb:            disk_size,
         boot_disk_gb:       10,
-        preemptible_tries:  3,
-        max_retries:        2,
+        preemptible_tries:  1,
+        max_retries:        0,
         docker:             "us.gcr.io/broad-dsp-lrma/lr-asm:0.1.14"
     }
     RuntimeAttr runtime_attr = select_first([runtime_attr_override, default_attr])
