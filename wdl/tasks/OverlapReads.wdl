@@ -22,7 +22,7 @@ task Minimap2 {
         prefix:      "[default-valued] prefix for output PAF"
     }
 
-    Int disk_size = 1 + 20*ceil(size(reads, "GB"))
+    Int disk_size = 1 + 50*ceil(size(reads, "GB"))
     Int mem = 96
 
     command <<<
