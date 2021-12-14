@@ -1,8 +1,5 @@
 version 1.0
 
-#######################################################
-# This pipeline calls small variants using DeepVariant.
-#######################################################
 
 import "Structs.wdl"
 
@@ -55,8 +52,9 @@ task Clair {
             --threads=${num_core} \
             --platform=~{platform} \
             --model_path="/opt/models/~{platform}" \
-            --sample_name=$SM --gvcf ~{true='--ctg_name=' false='' defined(chr)}~{select_first([chr, ""])} \
+            --sample_name=$SM --gvcf ~{true='--ctg_name=' false='' defined(chr)}~{select_first([chr, "--include_all_ctgs"])} \
             --output="./"
+        # --include_all_ctgs is turned on, as scatter-gather chops bam before Clair
         
         # for chrM, Clair3 creates a header only vcf, create as well
         if [[ ! -f merge_output.gvcf.gz ]]; then cp "merge_output.vcf.gz" "merge_output.gvcf.gz"; fi
