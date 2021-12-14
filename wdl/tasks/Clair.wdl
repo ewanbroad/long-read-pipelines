@@ -57,19 +57,22 @@ task Clair {
             --model_path="/opt/models/~{platform}" \
             --sample_name=$SM --gvcf ~{true='--ctg_name=' false='' defined(chr)}~{select_first([chr, ""])} \
             --output="./"
+        
+        # for chrM, Clair3 creates a header only vcf, create as well
+        if [[ ! -f merge_output.gvcf.gz ]]; then cp "merge_output.vcf.gz" "merge_output.gvcf.gz"; fi
     >>>
 
     output {
         # save both VCF and gVCF
-        File pileup_vcf = "pileup.vcf.gz"
-        File pileup_vcf_tbi = "pileup.vcf.gz.tbi"
-        File full_alignment_vcf = "full_alignment.vcf.gz"
-        File full_alignment_tbi = "full_alignment.vcf.gz.tbi"
+        File? pileup_vcf = "pileup.vcf.gz"
+        File? pileup_vcf_tbi = "pileup.vcf.gz.tbi"
+        File? full_alignment_vcf = "full_alignment.vcf.gz"
+        File? full_alignment_tbi = "full_alignment.vcf.gz.tbi"
 
         File vcf = "merge_output.vcf.gz"
-        File vcf_tbi = "merge_output.vcf.gz.tbi"
+        File? vcf_tbi = "merge_output.vcf.gz.tbi"
         File gvcf = "merge_output.gvcf.gz"
-        File gvcf_tbi = "merge_output.gvcf.gz.tbi"
+        File? gvcf_tbi = "merge_output.gvcf.gz.tbi"
     }
 
     #########################

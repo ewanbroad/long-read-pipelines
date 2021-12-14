@@ -64,7 +64,6 @@ task MergeAndSortVCFs {
 
     input {
         Array[File] vcfs
-        Array[File] tbis
 
         File ref_fasta_fai
 

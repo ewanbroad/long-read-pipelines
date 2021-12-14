@@ -92,7 +92,6 @@ workflow CallVariants {
     call VariantUtils.MergeAndSortVCFs as MergeAndSortClairVCFs {
         input:
             vcfs = Clair.vcf,
-            tbis = Clair.vcf_tbi,
             ref_fasta_fai = ref_fasta_fai,
             prefix = prefix + ".clair"
     }
@@ -100,7 +99,6 @@ workflow CallVariants {
     call VariantUtils.MergeAndSortVCFs as MergeAndSortClair_gVCFs {
         input:
             vcfs = Clair.gvcf,
-            tbis = Clair.gvcf_tbi,
             ref_fasta_fai = ref_fasta_fai,
             prefix = prefix + ".clair.g"
     }
@@ -143,7 +141,6 @@ workflow CallVariants {
         call VariantUtils.MergeAndSortVCFs as MergeDeepVariantGVCFs {
             input:
                 vcfs     = CCSPepper.gVCF,
-                tbis     = CCSPepper.gVCF_tbi,
                 prefix   = dvp_prefix + ".g",
                 ref_fasta_fai = ref_fasta_fai
         }
@@ -152,7 +149,6 @@ workflow CallVariants {
         call VariantUtils.MergeAndSortVCFs as MergeDeepVariantVCFs {
             input:
                 vcfs     = CCSPepper.VCF,
-                tbis     = CCSPepper.VCF_tbi,
                 prefix   = dvp_prefix,
                 ref_fasta_fai = ref_fasta_fai
         }
@@ -237,7 +233,6 @@ workflow CallVariants {
         call VariantUtils.MergeAndSortVCFs as MergeSnifflesVCFs {
             input:
                 vcfs   = FixSnifflesVCF.sortedVCF,
-                tbis   = FixSnifflesVCF.tbi,
                 ref_fasta_fai = ref_fasta_fai,
                 prefix = prefix + ".sniffles"
         }
