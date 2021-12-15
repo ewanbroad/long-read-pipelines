@@ -27,6 +27,8 @@ workflow PBCCSWholeGenome {
         String gcs_out_root_dir
 
         Boolean call_variants = true
+        Boolean call_small_variants = true
+        Boolean call_svs = true
 
         Boolean? fast_less_sensitive_sv
 
@@ -51,7 +53,10 @@ workflow PBCCSWholeGenome {
 
         call_variants:      "whether to run variant calling step or not, following inputs assumes this is set to 'true'"
 
+        call_svs: "whether to call SVs, if call_variants is true"
         fast_less_sensitive_sv: "to trade less sensitive SV calling for faster speed"
+
+        call_small_variants: "whether to call small variants, if call_variants is true"
 
         call_small_vars_on_mitochondria: "if false, will not attempt to call variants on mitochondria; if true, some samples might fail (caller feature) due to lack of signal"
         sites_vcf:     "for use with Clair, the small variant caller"
@@ -94,6 +99,7 @@ workflow PBCCSWholeGenome {
         if (! defined(ref_scatter_interval_list_locator)) {call Utils.StopWorkflow as ref_scatter_interval_list_locator_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_locator"}}
         if (! defined(ref_scatter_interval_list_ids)) {call Utils.StopWorkflow as ref_scatter_interval_list_ids_not_provided {input: reason = "Unprovided arg ref_scatter_interval_list_ids"}}
         if (! defined(call_small_vars_on_mitochondria)) {call Utils.StopWorkflow as call_small_vars_on_mitochondria_not_provided {input: reason = "Unprovided arg call_small_vars_on_mitochondria"}}
+        if ((!call_small_variants) && (!call_svs)) {call Utils.StopWorkflow as nothing_to_call {input: reason = "You want variants but want neither SV nor small variants?!"}}
 
         call VAR.CallVariants {
             input:
@@ -104,6 +110,9 @@ workflow PBCCSWholeGenome {
                 ref_dict          = ref_map['dict'],
                 tandem_repeat_bed = ref_map['tandem_repeat_bed'],
                 prefix = participant_name,
+
+                call_small_variants = call_small_variants,
+                call_svs = call_svs,
 
                 fast_less_sensitive_sv = select_first([fast_less_sensitive_sv]),
 
@@ -121,25 +130,29 @@ workflow PBCCSWholeGenome {
         String svdir = outdir + "/variants/sv"
         String smalldir = outdir + "/variants/small"
 
-        call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = CallVariants.pbsv_vcf }
-        call FF.FinalizeToFile as FinalizePBSVtbi { input: outdir = svdir, file = CallVariants.pbsv_tbi }
+        if (call_svs) {
+            call FF.FinalizeToFile as FinalizePBSV { input: outdir = svdir, file = select_first([CallVariants.pbsv_vcf]) }
+            call FF.FinalizeToFile as FinalizePBSVtbi { input: outdir = svdir, file = select_first([CallVariants.pbsv_tbi]) }
 
-        call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = CallVariants.sniffles_vcf }
-        call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = CallVariants.sniffles_tbi }
+            call FF.FinalizeToFile as FinalizeSniffles { input: outdir = svdir, file = select_first([CallVariants.sniffles_vcf]) }
+            call FF.FinalizeToFile as FinalizeSnifflesTbi { input: outdir = svdir, file = select_first([CallVariants.sniffles_tbi]) }
+        }
 
-        call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = CallVariants.clair_vcf}
-        call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = CallVariants.clair_tbi}
+        if (call_small_variants) {
+            call FF.FinalizeToFile as FinalizeClairVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_vcf]) }
+            call FF.FinalizeToFile as FinalizeClairTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_tbi]) }
 
-        call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = CallVariants.clair_gvcf}
-        call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = CallVariants.clair_gtbi}
+            call FF.FinalizeToFile as FinalizeClairGVcf { input: outdir = smalldir, file = select_first([CallVariants.clair_gvcf]) }
+            call FF.FinalizeToFile as FinalizeClairGTbi { input: outdir = smalldir, file = select_first([CallVariants.clair_gtbi]) }
 
-        if (defined(run_dv_pepper_analysis) && (run_dv_pepper_analysis)) {
-            call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_vcf])}
-            call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
-            call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}
-            call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_tbi])}
-            call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_vcf]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz" }
-            call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_tbi]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz.tbi" }
+            if (defined(run_dv_pepper_analysis) && (run_dv_pepper_analysis)) {
+                call FF.FinalizeToFile as FinalizeDVPepperVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_vcf])}
+                call FF.FinalizeToFile as FinalizeDVPepperTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_tbi])}
+                call FF.FinalizeToFile as FinalizeDVPepperGVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_vcf])}
+                call FF.FinalizeToFile as FinalizeDVPepperGTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_g_tbi])}
+                call FF.FinalizeToFile as FinalizeDVPEPPERPhasedVcf { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_vcf]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz" }
+                call FF.FinalizeToFile as FinalizeDVPEPPERPhasedTbi { input: outdir = smalldir, file = select_first([CallVariants.dvp_phased_tbi]), name = "~{participant_name}.deepvariant_pepper.phased.vcf.gz.tbi" }
+            }
         }
     }
 
