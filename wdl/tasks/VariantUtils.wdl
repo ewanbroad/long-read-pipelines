@@ -348,22 +348,48 @@ task FixSnifflesVCF {
         ####################################################################
         # 2.1. more prep for fixing undefined VCF INFO/FT/FORMATs
         # get FORMATs in header
-        grep -F '##FORMAT=<' header.txt | awk -F ',' '{print $1}' | sed 's/##FORMAT=<ID=//' | sort > formats.in_header.txt
+        if grep -q -F '##FORMAT=<' header.txt; then
+            grep -F '##FORMAT=<' header.txt | awk -F ',' '{print $1}' | sed 's/##FORMAT=<ID=//' | sort > formats.in_header.txt
+        else
+            touch formats.in_header.txt
+        fi
         # get FILTERs in header
-        grep -F '##FILTER=<' header.txt | awk -F ',' '{print $1}' | sed 's/##FILTER=<ID=//' | sort > filters.in_header.txt
+        if grep -q -F '##FILTER=<' header.txt; then
+            grep -F '##FILTER=<' header.txt | awk -F ',' '{print $1}' | sed 's/##FILTER=<ID=//' | sort > filters.in_header.txt
+        else
+            touch filters.in_header.txt
+        fi
         # get non-flag INFO in header
-        grep -F '##INFO=<' header.txt | grep -vF 'Type=Flag' | awk -F ',' '{print $1}' | sed 's/##INFO=<ID=//' | sort > non_flag_info.in_header.txt
+        if grep -q -F '##INFO=<' header.txt; then
+            grep -F '##INFO=<' header.txt | grep -vF 'Type=Flag' | awk -F ',' '{print $1}' | sed 's/##INFO=<ID=//' | sort > non_flag_info.in_header.txt
+        else
+            touch non_flag_info.in_header.txt
+        fi
         # get     flag INFO in header
-        grep -F '##INFO=<' header.txt | grep  -F 'Type=Flag' | awk -F ',' '{print $1}' | sed 's/##INFO=<ID=//' | sort >     flag_info.in_header.txt
+        if grep -q -F '##INFO=<' header.txt; then
+            grep -F '##INFO=<' header.txt | grep  -F 'Type=Flag' | awk -F ',' '{print $1}' | sed 's/##INFO=<ID=//' | sort >     flag_info.in_header.txt
+        else
+            touch flag_info.in_header.txt
+        fi
 
         # get FORMATs in practice
         awk '{print $9}' body.txt | sort | uniq | sed 's/:/\n/g' | sort | uniq > formats.in_vcf.txt
         # get FILTERs in practice
         awk '{print $7}' body.txt | sort | uniq | grep -v "^PASS$" > filters.in_vcf.txt
-        # get non-flag INFO in practice
-        awk '{print $8}' body.txt | sed 's/;/\n/g' | grep -F '=' | awk -F '=' '{print $1}' | sort | uniq > non_flag_info.in_vcf.txt
-        # get     flag INFO in practice
-        awk '{print $8}' body.txt | sed 's/;/\n/g' | grep -vF '=' | sort | uniq > flag_info.in_vcf.txt
+        
+        awk '{print $8}' body.txt | sed 's/;/\n/g' > tmp.info.entries.txt
+        if grep -q -F '=' tmp.info.entries.txt; then
+            # get non-flag INFO in practicez
+            grep -F '=' tmp.info.entries.txt | awk -F '=' '{print $1}' | sort | uniq > non_flag_info.in_vcf.txt
+        fi
+        if grep -q -vF '=' tmp.info.entries.txt; then
+            # get     flag INFO in practice
+            awk '{print $8}' body.txt | sed 's/;/\n/g' | grep -vF '=' | sort | uniq > flag_info.in_vcf.txt
+        fi
+        touch non_flag_info.in_vcf.txt
+        touch     flag_info.in_vcf.txt
+
+        echo "I survived. More to go..."
 
         ####################################################################
         # 2.2. more prep for fixing undefined VCF INFO/FT/FORMATs
