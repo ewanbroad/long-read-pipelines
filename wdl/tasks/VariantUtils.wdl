@@ -323,12 +323,14 @@ task FixSnifflesVCF {
     command <<<
         set -euxo pipefail
 
+        # 1. fix sample information (Sniffles derives VCF SM information from the path to the BAM ......)
         cp ~{vcf} ~{local_raw}
         echo ~{sample_name} > sample_names.txt
         bcftools reheader --samples sample_names.txt -o ~{local_sp_fixed} ~{local_raw}
         rm ~{vcf} && rm ~{local_raw}
 
         ####################################################################
+        # 2. prep for fixing undefined VCF INFO/FT/FORMAT, also guard against when the VCF is empty
         ~{initial_grep_cmd} "^##" ~{local_sp_fixed} > header.txt
         ~{initial_grep_cmd} -v "^#" ~{local_sp_fixed} > body.txt || true
         if [[ ! -f body.txt ]] || [[ ! -s body.txt ]]; then
@@ -344,13 +346,14 @@ task FixSnifflesVCF {
         fi
 
         ####################################################################
+        # 2.1. more prep for fixing undefined VCF INFO/FT/FORMATs
         # get FORMATs in header
         grep -F '##FORMAT=<' header.txt | awk -F ',' '{print $1}' | sed 's/##FORMAT=<ID=//' | sort > formats.in_header.txt
-        # get FILTERs in practice
+        # get FILTERs in header
         grep -F '##FILTER=<' header.txt | awk -F ',' '{print $1}' | sed 's/##FILTER=<ID=//' | sort > filters.in_header.txt
-        # get non-flag INFO in practice
+        # get non-flag INFO in header
         grep -F '##INFO=<' header.txt | grep -vF 'Type=Flag' | awk -F ',' '{print $1}' | sed 's/##INFO=<ID=//' | sort > non_flag_info.in_header.txt
-        # get     flag INFO in practice
+        # get     flag INFO in header
         grep -F '##INFO=<' header.txt | grep  -F 'Type=Flag' | awk -F ',' '{print $1}' | sed 's/##INFO=<ID=//' | sort >     flag_info.in_header.txt
 
         # get FORMATs in practice
@@ -363,6 +366,7 @@ task FixSnifflesVCF {
         awk '{print $8}' body.txt | sed 's/;/\n/g' | grep -vF '=' | sort | uniq > flag_info.in_vcf.txt
 
         ####################################################################
+        # 2.2. more prep for fixing undefined VCF INFO/FT/FORMATs
         comm -13 formats.in_header.txt formats.in_vcf.txt > missing.formats.txt
         while IFS= read -r line
         do
@@ -388,19 +392,25 @@ task FixSnifflesVCF {
         done < missing.flag_info.txt
 
         ####################################################################
-        grep "^##" ~{local_sp_fixed} | grep -v "^##[A-Z]" | grep -vF 'contig=' > first_lines.txt
-        grep -F "##contig=<ID=" header.txt > contigs.txt
-        grep "^#CHROM" ~{local_sp_fixed} > sample.line.txt
-        grep "^##" ~{local_sp_fixed} | grep "^##[A-Z]" | sort > definitions.txt
-        cat definitions.txt missing.*.header | sort > everything.defined.txt
-        cat first_lines.txt contigs.txt everything.defined.txt sample.line.txt > fixed.header.txt
+        # 2. actually fix undefined VCF INFO/FT/FORMATs
+        if  find . -maxdepth 1 -type f -name "missing.*.header" 2>/dev/null | grep -q .; then 
+            grep "^##" ~{local_sp_fixed} | grep -v "^##[A-Z]" | grep -vF 'contig=' > first_lines.txt
+            grep -F "##contig=<ID=" header.txt > contigs.txt
+            grep "^#CHROM" ~{local_sp_fixed} > sample.line.txt
+            grep "^##" ~{local_sp_fixed} | grep "^##[A-Z]" | sort > existing_definitions.txt
+            cat existing_definitions.txt missing.*.header | sort > everything.defined.txt
+            cat first_lines.txt contigs.txt everything.defined.txt sample.line.txt > fixed.header.txt
+            # print to stdout for checking
+            grep -vF "##contig=<ID=" fixed.header.txt
 
-        # print to stdout for checking
-        grep -vF "##contig=<ID=" fixed.header.txt 
+            cat fixed.header.txt body.txt > fixed.vcf
+            rm ~{local_sp_fixed}
+        else
+            mv ~{local_sp_fixed} fixed.vcf
+        fi
 
-        cat fixed.header.txt body.txt > fixed.vcf
-        rm ~{local_sp_fixed}
-
+        ####################################################################
+        # 3. fix contigs undefined (in later stages)
         if ~{fix_contigs}; then
             bcftools reheader \
                 --fai ~{ref_fasta_fai} \
@@ -409,6 +419,8 @@ task FixSnifflesVCF {
             mv fixed.and_contigs.vcf fixed.vcf
         fi
 
+        ####################################################################
+        # 4. fix occationally unsorted VCF
         bcftools \
             sort \
             --temp-dir tm_sort \
